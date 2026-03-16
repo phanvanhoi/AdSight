@@ -3,8 +3,10 @@ from datetime import datetime, timezone
 
 import httpx
 
-from app.collectors.base import BaseCollector
+from app.collectors.base import BaseCollector, upsert_ads, index_ads_to_es
 from app.config import settings
+from app.core.database import async_session
+from app.search.es_client import es_client
 
 logger = logging.getLogger(__name__)
 
@@ -22,8 +24,8 @@ class TikTokCollector(BaseCollector):
             country_code: str - e.g. "VN"
             industry_id: str - industry filter
             period: int - 7, 30, 180 days
-            page: int
             limit: int
+            max_pages: int
         """
         country_code = params.get("country_code", "VN")
         period = params.get("period", 30)
@@ -80,13 +82,13 @@ class TikTokCollector(BaseCollector):
             "advertiser_name": raw_ad.get("brand_name", raw_ad.get("advertiser_name", "")),
             "advertiser_page_url": None,
             "ad_type": "video",
-            "headline": raw_ad.get("title", ""),
-            "body_text": raw_ad.get("text", raw_ad.get("caption", "")),
+            "headline": raw_ad.get("ad_title", raw_ad.get("title", "")),
+            "body_text": raw_ad.get("ad_text", raw_ad.get("text", raw_ad.get("caption", ""))),
             "cta_type": raw_ad.get("cta", None),
             "media_urls": [video_url] if video_url else [],
             "media_s3_keys": [],
             "thumbnail_url": cover_url or None,
-            "landing_page_url": raw_ad.get("landing_page", None),
+            "landing_page_url": raw_ad.get("landing_page_url", raw_ad.get("landing_page", None)),
             "target_countries": [raw_ad.get("country_code", "VN")],
             "target_age_min": None,
             "target_age_max": None,
@@ -108,3 +110,42 @@ class TikTokCollector(BaseCollector):
             "is_active": True,
             "created_at": now,
         }
+
+
+async def collect_and_store(country_code: str = "VN", period: int = 30) -> dict:
+    """
+    Fetch ads from TikTok Creative Center, normalize, upsert to DB, index to ES.
+    Returns stats: {"fetched": N, "new": M, "updated": K}
+    """
+    collector = TikTokCollector()
+
+    await es_client.initialize()
+    es = es_client.client
+
+    total_fetched = 0
+    total_new = 0
+    total_updated = 0
+
+    try:
+        ads = await collector.collect_with_retry({
+            "country_code": country_code,
+            "period": period,
+            "limit": 50,
+            "max_pages": 5,
+        })
+        total_fetched = len(ads)
+
+        if ads:
+            async with async_session() as db:
+                result = await upsert_ads(db, ads)
+                total_new = result["new"]
+                total_updated = result["updated"]
+                await index_ads_to_es(es, result["ads"])
+    except Exception as e:
+        logger.error(f"[tiktok] Error: {e}", exc_info=True)
+    finally:
+        await es_client.close()
+
+    stats = {"fetched": total_fetched, "new": total_new, "updated": total_updated}
+    logger.info(f"[tiktok] Collection complete: {stats}")
+    return stats

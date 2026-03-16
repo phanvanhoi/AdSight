@@ -1,10 +1,13 @@
+import asyncio
 import logging
 from datetime import datetime, timezone
 
 import httpx
 
-from app.collectors.base import BaseCollector
+from app.collectors.base import BaseCollector, upsert_ads, index_ads_to_es
 from app.config import settings
+from app.core.database import async_session
+from app.search.es_client import es_client
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +40,11 @@ AD_FIELDS = [
 ]
 
 
+class RateLimitError(Exception):
+    """Raised when Meta API returns 429."""
+    pass
+
+
 class MetaCollector(BaseCollector):
     def __init__(self):
         super().__init__(platform="meta")
@@ -51,6 +59,7 @@ class MetaCollector(BaseCollector):
             ad_reached_countries: list[str] - e.g. ["VN"]
             ad_type: str - "ALL" | "POLITICAL_AND_ISSUE_ADS"
             limit: int - results per page (max 1000)
+            max_pages: int - max pagination pages
         """
         search_terms = params.get("search_terms", "")
         countries = params.get("ad_reached_countries", ["VN"])
@@ -76,6 +85,10 @@ class MetaCollector(BaseCollector):
             while url and page < max_pages:
                 try:
                     response = await client.get(url, params=request_params if page == 0 else None)
+
+                    if response.status_code == 429:
+                        raise RateLimitError(f"Rate limited by Meta API (429)")
+
                     response.raise_for_status()
                     data = response.json()
 
@@ -90,6 +103,8 @@ class MetaCollector(BaseCollector):
                     request_params = None  # next URL includes params
                     page += 1
 
+                except RateLimitError:
+                    raise  # Let retry handler deal with it
                 except httpx.HTTPStatusError as e:
                     logger.error(f"[meta] HTTP error: {e.response.status_code} - {e.response.text}")
                     break
@@ -118,9 +133,11 @@ class MetaCollector(BaseCollector):
         # Extract text content
         bodies = raw_ad.get("ad_creative_bodies", [])
         titles = raw_ad.get("ad_creative_link_titles", [])
+        captions = raw_ad.get("ad_creative_link_captions", [])
 
-        headline = titles[0] if titles else None
-        body_text = bodies[0] if bodies else None
+        headline = " | ".join(titles) if titles else None
+        body_text = " | ".join(bodies) if bodies else None
+        cta_type = captions[0] if captions else None
 
         # Extract spend
         spend = raw_ad.get("spend", {})
@@ -142,23 +159,38 @@ class MetaCollector(BaseCollector):
         elif isinstance(target_locations, list):
             countries = target_locations
 
+        # Bylines → advertiser page URL
+        bylines = raw_ad.get("bylines", "")
+        advertiser_page_url = None
+        page_id = raw_ad.get("page_id", "")
+        if page_id:
+            advertiser_page_url = f"https://facebook.com/{page_id}"
+
         # Delivery dates
         start_time = raw_ad.get("ad_delivery_start_time")
         stop_time = raw_ad.get("ad_delivery_stop_time")
 
+        # Snapshot URL as media
+        snapshot_url = raw_ad.get("ad_snapshot_url")
+        media_urls = [snapshot_url] if snapshot_url else []
+
+        # Demographics
+        demographic_distribution = raw_ad.get("demographic_distribution")
+        publisher_platforms = raw_ad.get("publisher_platforms", [])
+
         return {
             "platform": "meta",
             "platform_ad_id": str(raw_ad.get("id", "")),
-            "advertiser_id": raw_ad.get("page_id", ""),
+            "advertiser_id": page_id,
             "advertiser_name": raw_ad.get("page_name", ""),
-            "advertiser_page_url": f"https://facebook.com/{raw_ad.get('page_id', '')}",
+            "advertiser_page_url": advertiser_page_url,
             "ad_type": self._detect_ad_type(raw_ad),
             "headline": headline,
             "body_text": body_text,
-            "cta_type": None,
-            "media_urls": [],
+            "cta_type": cta_type,
+            "media_urls": media_urls,
             "media_s3_keys": [],
-            "thumbnail_url": raw_ad.get("ad_snapshot_url"),
+            "thumbnail_url": snapshot_url,
             "landing_page_url": None,
             "target_countries": countries if countries else ["VN"],
             "target_age_min": None,
@@ -190,3 +222,47 @@ VN_SEARCH_TERMS = [
     "giày dép", "túi xách", "đồ ăn", "nhà hàng",
     "du lịch", "khóa học", "bất động sản", "xe máy",
 ]
+
+
+async def collect_and_store(search_terms: str | None = None) -> dict:
+    """
+    Fetch ads from Meta Ad Library, normalize, upsert to DB, index to ES.
+    Returns stats: {"fetched": N, "new": M, "updated": K}
+    """
+    collector = MetaCollector()
+    terms = [search_terms] if search_terms else VN_SEARCH_TERMS
+
+    await es_client.initialize()
+    es = es_client.client
+
+    total_fetched = 0
+    total_new = 0
+    total_updated = 0
+
+    try:
+        for term in terms:
+            try:
+                ads = await collector.collect_with_retry({
+                    "search_terms": term,
+                    "ad_reached_countries": ["VN"],
+                    "limit": 100,
+                    "max_pages": 3,
+                })
+                total_fetched += len(ads)
+
+                if ads:
+                    async with async_session() as db:
+                        result = await upsert_ads(db, ads)
+                        total_new += result["new"]
+                        total_updated += result["updated"]
+                        await index_ads_to_es(es, result["ads"])
+
+                    logger.info(f"[meta] '{term}': {result['new']} new, {result['updated']} updated")
+            except Exception as e:
+                logger.error(f"[meta] Error collecting '{term}': {e}", exc_info=True)
+    finally:
+        await es_client.close()
+
+    stats = {"fetched": total_fetched, "new": total_new, "updated": total_updated}
+    logger.info(f"[meta] Collection complete: {stats}")
+    return stats
