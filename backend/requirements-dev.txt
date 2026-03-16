@@ -1,4 +1,7 @@
-# Dev/Test dependencies (install alongside requirements.txt)
+# Test dependencies (install alongside requirements.txt for development)
+# Note: httpx is also in requirements.txt (used by app code), listed here
+# so dev environments only need `pip install -r requirements-dev.txt` after
+# a minimal prod install.
 pytest==8.3.4
 pytest-asyncio==0.24.0
 aiosqlite==0.20.0

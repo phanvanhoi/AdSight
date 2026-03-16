@@ -60,7 +60,7 @@ def upgrade() -> None:
         sa.Column("advertiser_id", sa.String(255)),
         sa.Column("advertiser_name", sa.String(500)),
         sa.Column("advertiser_page_url", sa.Text()),
-        sa.Column("ad_type", sa.String(50), server_default="image"),
+        sa.Column("ad_type", sa.String(50)),
         sa.Column("headline", sa.Text()),
         sa.Column("body_text", sa.Text()),
         sa.Column("cta_type", sa.String(100)),

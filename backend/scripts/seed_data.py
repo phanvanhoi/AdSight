@@ -4,6 +4,8 @@ Usage:
     python -m scripts.seed_data
     python scripts/seed_data.py
 
+Note: Run `python -m scripts.init_es` first to create the ES index.
+
 Creates:
     - 2 test users: demo@adsight.vn (free), pro@adsight.vn (pro)
     - 25 sample ads (VN market, mix meta + tiktok, mix image/video/carousel)
@@ -23,7 +25,7 @@ from app.core.security import hash_password
 from app.models.ad import Ad
 from app.models.user import User
 from app.search.es_client import es_client
-from app.search.indexing import bulk_index_ads, create_ads_index
+from app.search.indexing import bulk_index_ads
 
 # ---------------------------------------------------------------------------
 # Test users
@@ -253,7 +255,6 @@ async def main():
         try:
             await es_client.initialize()
             es = es_client.client
-            await create_ads_index(es)
             await bulk_index_ads(es, es_docs)
             await es_client.close()
             print(f"  Indexed {len(es_docs)} ads into Elasticsearch\n")
