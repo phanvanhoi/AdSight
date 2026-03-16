@@ -925,3 +925,52 @@ Week 11-12: Launch prep
 ├── SEA market expansion
 └── Enterprise features
 ```
+
+---
+
+## 10. Data Collectors (Implementation)
+
+### 10.1 Collector Architecture
+
+- `app/collectors/base.py` — BaseCollector ABC, `upsert_ads()`, `index_ads_to_es()`
+- `app/collectors/meta_collector.py` — Meta Ad Library API collector (v19.0)
+- `app/collectors/tiktok_collector.py` — TikTok Creative Center API collector
+- Celery tasks: Meta mỗi 2h, TikTok mỗi 4h
+- Retry: exponential backoff (3 attempts) on API errors
+- 429 rate limit detection for Meta API (RateLimitError)
+- Upsert logic: deduplicate by `(platform, platform_ad_id)`, update metrics for existing ads
+
+### 10.2 Collector Flow
+
+```
+collect() → raw API data
+    ↓
+normalize() → internal Ad schema
+    ↓
+upsert_ads() → PostgreSQL (insert new / update existing)
+    ↓
+index_ads_to_es() → Elasticsearch bulk index
+```
+
+---
+
+## 11. Nginx Reverse Proxy
+
+### 11.1 Configuration
+
+- Rate limiting: auth 10r/m (burst=5), API 30r/s (burst=60)
+- Security headers: X-Frame-Options, X-Content-Type-Options, X-XSS-Protection, CSP, Referrer-Policy
+- `server_tokens off` — hide nginx version
+- Gzip compression enabled for text, JSON, JS, CSS, SVG
+- `client_max_body_size 50M`
+
+### 11.2 Routing
+
+| Location | Upstream | Rate Limit | Notes |
+|----------|----------|------------|-------|
+| `/api/auth/` | api:8000 | auth (10r/m) | Strict rate limit |
+| `/api/` | api:8000 | api (30r/s) | General API |
+| `/health` | api:8000 | none | Health check |
+| `/docs`, `/redoc` | api:8000 | none | API docs |
+| `/assets/` | frontend:3000 | none | Static files (30d cache) |
+| `/` | frontend:3000 | none | Frontend + WebSocket (HMR) |

@@ -1,17 +1,11 @@
-.PHONY: up down build logs restart shell migrate seed init-es test lint
+.PHONY: dev stop build logs restart shell migrate seed init-es test test-frontend test-all lint lint-fix setup
 
-# Docker
-up:
+# Development
+dev:
 	docker compose up -d
 
-up-build:
-	docker compose up -d --build
-
-down:
+stop:
 	docker compose down
-
-down-clean:
-	docker compose down -v
 
 build:
 	docker compose build
@@ -28,7 +22,7 @@ logs-worker:
 restart:
 	docker compose restart
 
-# Backend
+# Backend shell
 shell:
 	docker compose exec api bash
 
@@ -37,6 +31,9 @@ shell-db:
 
 # Database
 migrate:
+	cd backend && alembic upgrade head
+
+migrate-docker:
 	docker compose exec api alembic upgrade head
 
 migrate-create:
@@ -44,10 +41,16 @@ migrate-create:
 
 # Elasticsearch
 init-es:
+	cd backend && python -m scripts.init_es
+
+init-es-docker:
 	docker compose exec api python -m scripts.init_es
 
 # Data
 seed:
+	cd backend && python -m scripts.seed_data
+
+seed-docker:
 	docker compose exec api python -m scripts.seed_data
 
 collect-meta:
@@ -56,12 +59,21 @@ collect-meta:
 collect-tiktok:
 	docker compose exec api python -m app.collectors.tiktok_collector
 
-# Test
+# Testing
 test:
-	docker compose exec api pytest -v
+	cd backend && pytest tests/ -v --tb=short
 
+test-frontend:
+	cd frontend && npm run test:run
+
+test-all: test test-frontend
+
+# Linting
 lint:
-	docker compose exec api ruff check app/
+	cd backend && ruff check . && ruff format --check .
+
+lint-fix:
+	cd backend && ruff check --fix . && ruff format .
 
 # Frontend
 fe-shell:
@@ -69,3 +81,7 @@ fe-shell:
 
 fe-install:
 	docker compose exec frontend npm install
+
+# Setup (first time)
+setup: build init-es-docker migrate-docker seed-docker
+	@echo "Setup complete! Run 'make dev' to start."

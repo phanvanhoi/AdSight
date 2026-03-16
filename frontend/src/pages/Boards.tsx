@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus, Trash2, FolderOpen } from 'lucide-react'
 import { listBoards, createBoard, deleteBoard, getBoardAds } from '../api/boards'
 import AdGrid from '../components/search/AdGrid'
+import LoadingSpinner from '../components/LoadingSpinner'
 import type { Board } from '../types/board'
 
 export default function Boards() {
@@ -11,7 +12,7 @@ export default function Boards() {
   const [newBoardName, setNewBoardName] = useState('')
   const [showCreate, setShowCreate] = useState(false)
 
-  const { data: boards = [] } = useQuery({
+  const { data: boards = [], isLoading: boardsLoading } = useQuery({
     queryKey: ['boards'],
     queryFn: listBoards,
   })
@@ -74,6 +75,8 @@ export default function Boards() {
           </button>
         </div>
       )}
+
+      {boardsLoading && <LoadingSpinner text="Dang tai boards..." />}
 
       <div className="flex gap-6">
         {/* Board list */}

@@ -9,6 +9,7 @@ from app.config import settings
 from app.core.database import engine
 from app.core.redis import redis_client
 from app.search.es_client import es_client
+from app.api.health import router as health_router
 from app.api.router import api_router
 
 
@@ -50,12 +51,4 @@ async def pydantic_validation_handler(request, exc):
 
 # Routes
 app.include_router(api_router, prefix="/api")
-
-
-@app.get("/health")
-async def health_check():
-    return {
-        "status": "ok",
-        "app": settings.app_name,
-        "env": settings.app_env,
-    }
+app.include_router(health_router, prefix="/api")
