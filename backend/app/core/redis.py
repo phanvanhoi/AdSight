@@ -29,4 +29,7 @@ redis_client = RedisClient()
 
 
 async def get_redis():
-    return redis_client.client
+    try:
+        return redis_client.client
+    except RuntimeError:
+        return None

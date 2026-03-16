@@ -27,7 +27,12 @@ export default function Login() {
       )
       navigate('/dashboard')
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Dang nhap that bai')
+      const detail = err.response?.data?.detail
+      if (Array.isArray(detail)) {
+        setError(detail.map((e: any) => e.msg).join('. '))
+      } else {
+        setError(detail || 'Dang nhap that bai')
+      }
     } finally {
       setLoading(false)
     }

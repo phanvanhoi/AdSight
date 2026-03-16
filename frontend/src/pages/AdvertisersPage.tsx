@@ -40,10 +40,10 @@ export default function AdvertisersPage() {
       <div>
         <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
           <Users size={24} />
-          Nha quang cao
+          Nhà quảng cáo
         </h1>
         <p className="text-sm text-gray-500 mt-1">
-          Cross-platform advertiser profiles — cung 1 brand tren nhieu nen tang
+          Cross-platform advertiser profiles — cùng 1 brand trên nhiều nền tảng
         </p>
       </div>
 
@@ -55,7 +55,7 @@ export default function AdvertisersPage() {
             type="text"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Tim nha quang cao..."
+            placeholder="Tìm nhà quảng cáo..."
             className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
           />
         </div>
@@ -64,26 +64,26 @@ export default function AdvertisersPage() {
           onChange={(e) => { setSort(e.target.value); setPage(1) }}
           className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
         >
-          <option value="total_ads">Nhieu ads nhat</option>
-          <option value="total_spend">Chi tieu cao nhat</option>
-          <option value="name">Ten A-Z</option>
+          <option value="total_ads">Nhiều ads nhất</option>
+          <option value="total_spend">Chi tiêu cao nhất</option>
+          <option value="name">Tên A-Z</option>
         </select>
         <button
           type="submit"
           className="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700"
         >
-          Tim
+          Tìm
         </button>
       </form>
 
       {/* Results */}
       <div>
         <p className="text-sm text-gray-500 mb-3">
-          {data ? `${data.total.toLocaleString()} nha quang cao` : 'Dang tai...'}
+          {data ? `${data.total.toLocaleString()} nhà quảng cáo` : 'Đang tải...'}
         </p>
 
         {isLoading ? (
-          <div className="text-center py-12 text-gray-400">Dang tai...</div>
+          <div className="text-center py-12 text-gray-400">Đang tải...</div>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {data?.results.map((g) => (

@@ -15,9 +15,15 @@ from app.api.router import api_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup
-    await redis_client.initialize()
-    await es_client.initialize()
+    # Startup — Redis/ES are optional, app should still serve auth & API
+    try:
+        await redis_client.initialize()
+    except Exception:
+        pass  # Rate limiting degrades gracefully
+    try:
+        await es_client.initialize()
+    except Exception:
+        pass  # Search unavailable but auth/CRUD still work
     yield
     # Shutdown
     await engine.dispose()

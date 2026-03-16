@@ -19,7 +19,12 @@ export default function Register() {
       await register(email, password, fullName)
       navigate('/login')
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Dang ky that bai')
+      const detail = err.response?.data?.detail
+      if (Array.isArray(detail)) {
+        setError(detail.map((e: any) => e.msg).join('. '))
+      } else {
+        setError(detail || 'Dang ky that bai')
+      }
     } finally {
       setLoading(false)
     }
@@ -74,9 +79,9 @@ export default function Register() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              minLength={6}
+              minLength={8}
               className="mt-1 w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-              placeholder="Toi thieu 6 ky tu"
+              placeholder="Toi thieu 8 ky tu"
             />
           </div>
 

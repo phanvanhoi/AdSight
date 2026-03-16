@@ -27,7 +27,7 @@ export default function AdGrid({ ads, loading }: Props) {
   if (ads.length === 0) {
     return (
       <div className="text-center py-16">
-        <p className="text-gray-500 text-sm">Khong tim thay ads nao. Thu tu khoa khac.</p>
+        <p className="text-gray-500 text-sm">Không tìm thấy ads nào. Thử từ khóa khác.</p>
       </div>
     )
   }

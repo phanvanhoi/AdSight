@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Heart, MessageCircle, Share2, Clock, Bookmark } from 'lucide-react'
+import { Heart, MessageCircle, Share2, Clock } from 'lucide-react'
 import type { AdSummary } from '../../types/ad'
 
 interface Props {
@@ -7,9 +7,9 @@ interface Props {
 }
 
 const platformColors: Record<string, string> = {
-  meta: 'bg-blue-100 text-blue-700',
-  tiktok: 'bg-gray-900 text-white',
-  google: 'bg-red-100 text-red-700',
+  meta: 'bg-blue-500/80 text-white',
+  tiktok: 'bg-gray-900/80 text-white',
+  google: 'bg-red-500/80 text-white',
 }
 
 function formatNumber(n: number): string {
@@ -22,34 +22,40 @@ export default function AdCard({ ad }: Props) {
   return (
     <Link
       to={`/ads/${ad.id}`}
-      className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-shadow group"
+      className="bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-soft transition-all duration-200 group"
     >
       {/* Thumbnail */}
-      <div className="relative aspect-video bg-gray-100">
+      <div className="relative aspect-video bg-gray-100 overflow-hidden">
         {ad.thumbnail_url ? (
-          <img
-            src={ad.thumbnail_url}
-            alt={ad.headline || 'Ad'}
-            className="w-full h-full object-cover"
-            loading="lazy"
-          />
+          <>
+            <img
+              src={ad.thumbnail_url}
+              alt={ad.headline || 'Ad'}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              loading="lazy"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+          </>
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
-            No preview
+          <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm bg-gray-50">
+            Chưa có preview
           </div>
         )}
         {/* Platform badge */}
         <span
-          className={`absolute top-2 left-2 px-2 py-0.5 rounded text-xs font-semibold ${
-            platformColors[ad.platform] || 'bg-gray-100 text-gray-700'
+          className={`absolute top-2.5 left-2.5 px-2 py-1 rounded-md text-xs font-semibold backdrop-blur-sm ${
+            platformColors[ad.platform] || 'bg-white/80 text-gray-700'
           }`}
         >
-          {ad.platform === 'meta' ? 'Facebook' : ad.platform}
+          {ad.platform === 'meta' ? 'Facebook' : ad.platform === 'tiktok' ? 'TikTok' : ad.platform}
         </span>
-        {/* Ad type */}
-        <span className="absolute top-2 right-2 px-2 py-0.5 rounded bg-black/50 text-white text-xs">
-          {ad.ad_type}
-        </span>
+        {/* Active badge */}
+        {ad.is_active && (
+          <span className="absolute top-2.5 right-2.5 flex items-center gap-1 px-2 py-1 rounded-md bg-green-500/90 backdrop-blur-sm text-white text-xs font-medium">
+            <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+            Active
+          </span>
+        )}
       </div>
 
       {/* Content */}

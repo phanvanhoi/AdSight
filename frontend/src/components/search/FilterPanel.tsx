@@ -11,19 +11,19 @@ interface Props {
 export default function FilterPanel({ filters, onChange }: Props) {
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-4">
-      <h3 className="font-semibold text-gray-900 text-sm">Bo loc</h3>
+      <h3 className="font-semibold text-gray-900 text-sm">Bộ lọc</h3>
 
       {/* Country */}
       <div>
-        <label className="text-xs font-medium text-gray-500 uppercase">Quoc gia</label>
+        <label className="text-xs font-medium text-gray-500 uppercase">Quốc gia</label>
         <select
           value={filters.country}
           onChange={(e) => onChange('country', e.target.value)}
           className="mt-1 w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
         >
-          <option value="">Tat ca</option>
-          <option value="VN">Viet Nam</option>
-          <option value="TH">Thai Lan</option>
+          <option value="">Tất cả</option>
+          <option value="VN">Việt Nam</option>
+          <option value="TH">Thái Lan</option>
           <option value="ID">Indonesia</option>
           <option value="PH">Philippines</option>
           <option value="MY">Malaysia</option>
@@ -33,14 +33,14 @@ export default function FilterPanel({ filters, onChange }: Props) {
 
       {/* Ad Type */}
       <div>
-        <label className="text-xs font-medium text-gray-500 uppercase">Loai ads</label>
+        <label className="text-xs font-medium text-gray-500 uppercase">Loại ads</label>
         <select
           value={filters.ad_type}
           onChange={(e) => onChange('ad_type', e.target.value)}
           className="mt-1 w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
         >
-          <option value="">Tat ca</option>
-          <option value="image">Hinh anh</option>
+          <option value="">Tất cả</option>
+          <option value="image">Hình ảnh</option>
           <option value="video">Video</option>
           <option value="carousel">Carousel</option>
         </select>
@@ -48,21 +48,21 @@ export default function FilterPanel({ filters, onChange }: Props) {
 
       {/* Sort */}
       <div>
-        <label className="text-xs font-medium text-gray-500 uppercase">Sap xep</label>
+        <label className="text-xs font-medium text-gray-500 uppercase">Sắp xếp</label>
         <select
           value={filters.sort}
           onChange={(e) => onChange('sort', e.target.value)}
           className="mt-1 w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
         >
-          <option value="relevance">Lien quan nhat</option>
-          <option value="newest">Moi nhat</option>
-          <option value="engagement">Tuong tac cao</option>
+          <option value="relevance">Liên quan nhất</option>
+          <option value="newest">Mới nhất</option>
+          <option value="engagement">Tương tác cao</option>
         </select>
       </div>
 
       {/* Min Likes */}
       <div>
-        <label className="text-xs font-medium text-gray-500 uppercase">Likes toi thieu</label>
+        <label className="text-xs font-medium text-gray-500 uppercase">Likes tối thiểu</label>
         <input
           type="number"
           value={filters.min_likes}

@@ -1,5 +1,5 @@
 import client from './client'
-import type { SearchParams, SearchResponse } from '../types/ad'
+import type { SearchParams, SearchResponse, AdDetail } from '../types/ad'
 
 export async function searchAds(params: SearchParams): Promise<SearchResponse> {
   const cleanParams = Object.fromEntries(
@@ -9,7 +9,7 @@ export async function searchAds(params: SearchParams): Promise<SearchResponse> {
   return res.data
 }
 
-export async function getAdDetail(id: string) {
+export async function getAdDetail(id: string): Promise<AdDetail> {
   const res = await client.get(`/ads/${id}`)
   return res.data
 }

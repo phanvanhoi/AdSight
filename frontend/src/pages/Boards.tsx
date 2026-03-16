@@ -45,14 +45,14 @@ export default function Boards() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Boards</h1>
-          <p className="text-sm text-gray-500 mt-1">Luu va to chuc ads yeu thich</p>
+          <p className="text-sm text-gray-500 mt-1">Lưu và tổ chức ads yêu thích</p>
         </div>
         <button
           onClick={() => setShowCreate(!showCreate)}
           className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700"
         >
           <Plus size={16} />
-          Tao board
+          Tạo board
         </button>
       </div>
 
@@ -63,7 +63,7 @@ export default function Boards() {
             type="text"
             value={newBoardName}
             onChange={(e) => setNewBoardName(e.target.value)}
-            placeholder="Ten board..."
+            placeholder="Tên board..."
             className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm"
           />
           <button
@@ -71,12 +71,12 @@ export default function Boards() {
             disabled={!newBoardName.trim()}
             className="px-4 py-2 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700 disabled:opacity-50"
           >
-            Tao
+            Tạo
           </button>
         </div>
       )}
 
-      {boardsLoading && <LoadingSpinner text="Dang tai boards..." />}
+      {boardsLoading && <LoadingSpinner text="Đang tải boards..." />}
 
       <div className="flex gap-6">
         {/* Board list */}
@@ -108,7 +108,7 @@ export default function Boards() {
           ))}
 
           {boards.length === 0 && (
-            <p className="text-sm text-gray-400 text-center py-8">Chua co board nao</p>
+            <p className="text-sm text-gray-400 text-center py-8">Chưa có board nào</p>
           )}
         </div>
 
@@ -125,7 +125,7 @@ export default function Boards() {
           ) : (
             <div className="text-center py-16 text-gray-400">
               <FolderOpen size={48} className="mx-auto mb-3" />
-              <p>Chon 1 board de xem ads da luu</p>
+              <p>Chọn 1 board để xem ads đã lưu</p>
             </div>
           )}
         </div>

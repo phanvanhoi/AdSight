@@ -33,16 +33,21 @@ async def check_rate_limit(request: Request, redis=None):
     """Check rate limit for auth endpoints using Redis."""
     if redis is None:
         return
-    client_ip = request.client.host if request.client else "unknown"
-    key = f"auth_rate:{client_ip}"
-    count = await redis.incr(key)
-    if count == 1:
-        await redis.expire(key, RATE_LIMIT_WINDOW)
-    if count > RATE_LIMIT_MAX:
-        raise HTTPException(
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail="Too many requests. Please try again later.",
-        )
+    try:
+        client_ip = request.client.host if request.client else "unknown"
+        key = f"auth_rate:{client_ip}"
+        count = await redis.incr(key)
+        if count == 1:
+            await redis.expire(key, RATE_LIMIT_WINDOW)
+        if count > RATE_LIMIT_MAX:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="Too many requests. Please try again later.",
+            )
+    except HTTPException:
+        raise
+    except Exception:
+        pass  # Redis down — skip rate limiting
 
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)

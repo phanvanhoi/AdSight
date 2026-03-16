@@ -47,7 +47,7 @@ export default function TikTokShopPage() {
           TikTok Shop VN
         </h1>
         <p className="text-sm text-gray-500 mt-1">
-          Theo doi san pham, doanh thu va xu huong tren TikTok Shop
+          Theo dõi sản phẩm, doanh thu và xu hướng trên TikTok Shop
         </p>
       </div>
 
@@ -57,7 +57,7 @@ export default function TikTokShopPage() {
           type="text"
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
-          placeholder="Tim san pham..."
+          placeholder="Tìm sản phẩm..."
           className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
         />
         <select
@@ -65,31 +65,31 @@ export default function TikTokShopPage() {
           onChange={(e) => { setCategory(e.target.value); setPage(1) }}
           className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
         >
-          <option value="">Tat ca danh muc</option>
-          <option value="Làm đẹp">Lam dep</option>
-          <option value="Thời trang nữ">Thoi trang nu</option>
-          <option value="Thời trang nam">Thoi trang nam</option>
-          <option value="Điện tử">Dien tu</option>
-          <option value="Nhà cửa">Nha cua</option>
-          <option value="Mẹ & Bé">Me & Be</option>
-          <option value="Thực phẩm">Thuc pham</option>
-          <option value="Sức khỏe">Suc khoe</option>
+          <option value="">Tất cả danh mục</option>
+          <option value="Làm đẹp">Làm đẹp</option>
+          <option value="Thời trang nữ">Thời trang nữ</option>
+          <option value="Thời trang nam">Thời trang nam</option>
+          <option value="Điện tử">Điện tử</option>
+          <option value="Nhà cửa">Nhà cửa</option>
+          <option value="Mẹ & Bé">Mẹ & Bé</option>
+          <option value="Thực phẩm">Thực phẩm</option>
+          <option value="Sức khỏe">Sức khỏe</option>
         </select>
         <select
           value={sort}
           onChange={(e) => { setSort(e.target.value); setPage(1) }}
           className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
         >
-          <option value="sales">Ban chay nhat</option>
+          <option value="sales">Bán chạy nhất</option>
           <option value="revenue">Doanh thu cao</option>
-          <option value="price">Gia thap</option>
-          <option value="rating">Danh gia cao</option>
+          <option value="price">Giá thấp</option>
+          <option value="rating">Đánh giá cao</option>
         </select>
         <button
           type="submit"
           className="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700"
         >
-          Tim
+          Tìm
         </button>
       </form>
 
@@ -98,14 +98,14 @@ export default function TikTokShopPage() {
         <div>
           <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2 mb-3">
             <TrendingUp size={20} />
-            San pham trending
+            Sản phẩm trending
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
             {trending.results.slice(0, 5).map((p) => (
               <div key={p.product_id} className="bg-white border border-gray-200 rounded-lg p-3">
                 <p className="text-sm font-medium text-gray-900 line-clamp-2">{p.product_name}</p>
                 <p className="text-xs text-primary-600 font-semibold mt-1">{formatVND(p.price)}</p>
-                <p className="text-xs text-gray-500 mt-1">{formatNumber(p.sales_count)} da ban</p>
+                <p className="text-xs text-gray-500 mt-1">{formatNumber(p.sales_count)} đã bán</p>
               </div>
             ))}
           </div>
@@ -115,21 +115,21 @@ export default function TikTokShopPage() {
       {/* Results */}
       <div>
         <p className="text-sm text-gray-500 mb-3">
-          {data ? `${data.total.toLocaleString()} san pham` : 'Dang tai...'}
+          {data ? `${data.total.toLocaleString()} sản phẩm` : 'Đang tải...'}
         </p>
 
         {isLoading ? (
-          <div className="text-center py-12 text-gray-400">Dang tai...</div>
+          <div className="text-center py-12 text-gray-400">Đang tải...</div>
         ) : (
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 text-left">
                 <tr>
-                  <th className="px-4 py-3 font-medium text-gray-500">San pham</th>
-                  <th className="px-4 py-3 font-medium text-gray-500 text-right">Gia</th>
-                  <th className="px-4 py-3 font-medium text-gray-500 text-right">Da ban</th>
-                  <th className="px-4 py-3 font-medium text-gray-500 text-right">Danh gia</th>
-                  <th className="px-4 py-3 font-medium text-gray-500 text-right">Doanh thu/ngay</th>
+                  <th className="px-4 py-3 font-medium text-gray-500">Sản phẩm</th>
+                  <th className="px-4 py-3 font-medium text-gray-500 text-right">Giá</th>
+                  <th className="px-4 py-3 font-medium text-gray-500 text-right">Đã bán</th>
+                  <th className="px-4 py-3 font-medium text-gray-500 text-right">Đánh giá</th>
+                  <th className="px-4 py-3 font-medium text-gray-500 text-right">Doanh thu/ngày</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">

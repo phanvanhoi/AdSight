@@ -9,7 +9,7 @@ interface Props {
 }
 
 const PLATFORMS = [
-  { value: '', label: 'Tat ca' },
+  { value: '', label: 'Tất cả' },
   { value: 'meta', label: 'Facebook/IG' },
   { value: 'tiktok', label: 'TikTok' },
   { value: 'google', label: 'Google' },
@@ -31,14 +31,14 @@ export default function SearchBar({ initialQuery = '', onSearch, platform, onPla
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Tim kiem ads... vi du: kem chong nang, thoi trang, giam gia"
+          placeholder="Tìm kiếm ads... ví dụ: kem chống nắng, thời trang, giảm giá"
           className="w-full pl-12 pr-4 py-3.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm"
         />
         <button
           type="submit"
           className="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700"
         >
-          Tim kiem
+          Tìm kiếm
         </button>
       </form>
 
