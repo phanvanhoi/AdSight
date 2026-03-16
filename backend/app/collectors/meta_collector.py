@@ -7,6 +7,7 @@ import httpx
 from app.collectors.base import BaseCollector, upsert_ads, index_ads_to_es
 from app.config import settings
 from app.core.database import async_session
+from app.enrichment.pipeline import enrich_ads
 from app.search.es_client import es_client
 
 logger = logging.getLogger(__name__)
@@ -256,6 +257,10 @@ async def collect_and_store(search_terms: str | None = None) -> dict:
                         total_new += result["new"]
                         total_updated += result["updated"]
                         await index_ads_to_es(es, result["ads"])
+                        # Enrich newly upserted ads
+                        ad_ids = [a["id"] for a in result["ads"] if a.get("id")]
+                        if ad_ids:
+                            await enrich_ads(db, ad_ids=ad_ids)
 
                     logger.info(f"[meta] '{term}': {result['new']} new, {result['updated']} updated")
             except Exception as e:
@@ -266,3 +271,9 @@ async def collect_and_store(search_terms: str | None = None) -> dict:
     stats = {"fetched": total_fetched, "new": total_new, "updated": total_updated}
     logger.info(f"[meta] Collection complete: {stats}")
     return stats
+
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+    result = asyncio.run(collect_and_store())
+    print(f"Meta collection done: {result}")
