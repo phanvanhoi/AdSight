@@ -12,6 +12,7 @@ from sqlalchemy.pool import StaticPool
 from app.core.security import create_access_token, hash_password
 from app.models.base import Base
 from app.models.user import User
+from app.models import *  # noqa: F401,F403 — ensure all models register with Base.metadata
 
 
 # ---------------------------------------------------------------------------

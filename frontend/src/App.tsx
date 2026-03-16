@@ -5,6 +5,9 @@ import Search from './pages/Search'
 import AdDetailPage from './pages/AdDetailPage'
 import Dashboard from './pages/Dashboard'
 import Boards from './pages/Boards'
+import TikTokShopPage from './pages/TikTokShopPage'
+import AdvertisersPage from './pages/AdvertisersPage'
+import AdvertiserDetailPage from './pages/AdvertiserDetailPage'
 import Login from './pages/Login'
 import Register from './pages/Register'
 
@@ -19,6 +22,9 @@ export default function App() {
         <Route path="/ads/:id" element={<AdDetailPage />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/boards" element={<Boards />} />
+        <Route path="/tiktok-shop" element={<TikTokShopPage />} />
+        <Route path="/advertisers" element={<AdvertisersPage />} />
+        <Route path="/advertisers/:id" element={<AdvertiserDetailPage />} />
       </Route>
     </Routes>
   )

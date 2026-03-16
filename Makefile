@@ -59,6 +59,21 @@ collect-meta:
 collect-tiktok:
 	docker compose exec api python -m app.collectors.tiktok_collector
 
+collect-google:
+	docker compose exec api python -c "import asyncio; from app.collectors.google_collector import collect_and_store; asyncio.run(collect_and_store())"
+
+collect-tiktok-shop:
+	docker compose exec api python -c "import asyncio; from app.collectors.tiktok_shop_crawler import collect_and_store; asyncio.run(collect_and_store())"
+
+crawl-pages:
+	docker compose exec api python -m scripts.run_task crawl-pages
+
+download-creatives:
+	docker compose exec api python -m scripts.run_task download-creatives
+
+match-advertisers:
+	docker compose exec api python -m scripts.run_task match-advertisers
+
 # Testing
 test:
 	cd backend && pytest tests/ -v --tb=short

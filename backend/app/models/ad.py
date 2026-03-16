@@ -54,6 +54,32 @@ class Ad(BaseModel):
     tags: Mapped[dict | None] = mapped_column(JSONB, default=None)
     sentiment: Mapped[float | None] = mapped_column(Float)
 
+    # Enrichment — Auto-categorizer
+    category_l1: Mapped[str | None] = mapped_column(String(100), index=True)
+    category_l2: Mapped[str | None] = mapped_column(String(100), index=True)
+    detected_offers: Mapped[dict | None] = mapped_column(JSONB, default=None)
+    emotional_triggers: Mapped[dict | None] = mapped_column(JSONB, default=None)
+    target_audience_guess: Mapped[str | None] = mapped_column(String(500))
+
+    # Enrichment — Spend estimation
+    estimated_daily_spend: Mapped[float | None] = mapped_column(Float)
+    estimated_total_spend: Mapped[float | None] = mapped_column(Float)
+    cpm_estimate: Mapped[float | None] = mapped_column(Float)
+    engagement_rate: Mapped[float | None] = mapped_column(Float)
+    viral_score: Mapped[float | None] = mapped_column(Float)
+    is_hot: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+
+    # Creative metadata (populated by creative downloader)
+    creative_s3_key: Mapped[str | None] = mapped_column(String(500))
+    creative_file_size: Mapped[int | None] = mapped_column(Integer)
+    creative_width: Mapped[int | None] = mapped_column(Integer)
+    creative_height: Mapped[int | None] = mapped_column(Integer)
+    creative_format: Mapped[str | None] = mapped_column(String(20))
+    creative_duration: Mapped[float | None] = mapped_column(Float)
+    creative_phash: Mapped[str | None] = mapped_column(String(64), index=True)
+    has_text_overlay: Mapped[bool | None] = mapped_column(Boolean)
+    dominant_colors: Mapped[dict | None] = mapped_column(JSONB, default=None)
+
     # Status
     first_seen: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     last_seen: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

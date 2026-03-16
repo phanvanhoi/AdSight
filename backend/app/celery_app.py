@@ -30,6 +30,30 @@ celery.conf.beat_schedule = {
         "task": "app.tasks.collection_tasks.collect_tiktok_ads",
         "schedule": crontab(minute=30, hour="*/4"),
     },
+    "enrich-unenriched-ads-daily": {
+        "task": "app.tasks.collection_tasks.enrich_unenriched_ads",
+        "schedule": crontab(minute=0, hour=3),  # 3 AM daily
+    },
+    "collect-google-ads-every-6h": {
+        "task": "app.tasks.collection_tasks.collect_google_ads",
+        "schedule": crontab(minute=15, hour="*/6"),
+    },
+    "crawl-landing-pages-every-6h": {
+        "task": "app.tasks.collection_tasks.crawl_landing_pages",
+        "schedule": crontab(minute=0, hour="*/6"),
+    },
+    "download-creatives-every-4h": {
+        "task": "app.tasks.collection_tasks.download_creatives",
+        "schedule": crontab(minute=45, hour="*/4"),
+    },
+    "collect-tiktok-shop-every-6h": {
+        "task": "app.tasks.collection_tasks.collect_tiktok_shop",
+        "schedule": crontab(minute=30, hour="*/6"),
+    },
+    "match-advertisers-daily": {
+        "task": "app.tasks.collection_tasks.match_advertisers",
+        "schedule": crontab(minute=0, hour=4),  # 4 AM daily
+    },
 }
 
 # Auto-discover tasks

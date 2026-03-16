@@ -42,10 +42,16 @@ redis_data/
 *.log
 logs/
 
+# Testing
+.pytest_cache/
+
 # Coverage
 htmlcov/
 .coverage
 coverage/
+
+# Tasks (internal task tracking, not for git)
+tasks/
 
 # Misc
 *.bak

@@ -4,5 +4,11 @@ from app.models.ad import Ad
 from app.models.advertiser import Advertiser
 from app.models.board import Board
 from app.models.board_ad import BoardAd
+from app.models.landing_page import LandingPageInfo
+from app.models.tiktok_shop import TikTokShop, TikTokShopProduct
+from app.models.advertiser_group import AdvertiserGroup
 
-__all__ = ["Base", "User", "Ad", "Advertiser", "Board", "BoardAd"]
+__all__ = [
+    "Base", "User", "Ad", "Advertiser", "Board", "BoardAd",
+    "LandingPageInfo", "TikTokShop", "TikTokShopProduct", "AdvertiserGroup",
+]

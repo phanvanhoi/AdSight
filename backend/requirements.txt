@@ -37,3 +37,10 @@ python-dateutil==2.9.0
 
 # Async helpers
 asgiref==3.8.1
+
+# Image analysis
+Pillow==11.1.0
+imagehash==4.3.1
+
+# HTML parsing
+beautifulsoup4==4.12.3

@@ -91,6 +91,21 @@ ADS_INDEX_SETTINGS = {
             "last_seen": {"type": "date"},
             "is_active": {"type": "boolean"},
             "created_at": {"type": "date"},
+            # Enrichment fields
+            "category_l1": {"type": "keyword"},
+            "category_l2": {"type": "keyword"},
+            "detected_offers": {"type": "object", "enabled": False},
+            "emotional_triggers": {"type": "object", "enabled": False},
+            "target_audience_guess": {
+                "type": "text",
+                "analyzer": "vietnamese_analyzer",
+            },
+            "estimated_daily_spend": {"type": "float"},
+            "estimated_total_spend": {"type": "float"},
+            "cpm_estimate": {"type": "float"},
+            "engagement_rate": {"type": "float"},
+            "viral_score": {"type": "float"},
+            "is_hot": {"type": "boolean"},
         }
     },
 }

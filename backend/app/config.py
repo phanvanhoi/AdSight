@@ -38,6 +38,16 @@ class Settings(BaseSettings):
     # TikTok
     tiktok_api_base_url: str = "https://ads.tiktok.com/creative_radar_api/v1"
 
+    # Google Ads Transparency
+    google_ads_transparency_url: str = "https://adstransparency.google.com"
+
+    # TikTok Shop
+    tiktok_shop_base_url: str = "https://shop.tiktok.com"
+
+    # Proxy (for TikTok Shop crawler)
+    proxy_url: str = ""
+    proxy_enabled: bool = False
+
     # CORS
     cors_origins: list[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
     cors_origins_str: str = ""  # Comma-separated, overrides cors_origins if set

@@ -12,6 +12,7 @@ const PLATFORMS = [
   { value: '', label: 'Tat ca' },
   { value: 'meta', label: 'Facebook/IG' },
   { value: 'tiktok', label: 'TikTok' },
+  { value: 'google', label: 'Google' },
 ]
 
 export default function SearchBar({ initialQuery = '', onSearch, platform, onPlatformChange }: Props) {

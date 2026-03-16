@@ -50,6 +50,22 @@ def build_search_query(request: SearchRequest) -> dict:
     if request.min_likes:
         filters.append({"range": {"likes": {"gte": request.min_likes}}})
 
+    # Enrichment filters
+    if request.category_l1:
+        filters.append({"term": {"category_l1": request.category_l1}})
+    if request.category_l2:
+        filters.append({"term": {"category_l2": request.category_l2}})
+    if request.min_spend is not None:
+        filters.append({"range": {"estimated_daily_spend": {"gte": request.min_spend}}})
+    if request.max_spend is not None:
+        filters.append({"range": {"estimated_daily_spend": {"lte": request.max_spend}}})
+    if request.min_viral_score is not None:
+        filters.append({"range": {"viral_score": {"gte": request.min_viral_score}}})
+    if request.is_hot is not None:
+        filters.append({"term": {"is_hot": request.is_hot}})
+    if request.has_discount is True:
+        filters.append({"exists": {"field": "detected_offers"}})
+
     # Build bool query
     bool_query = {}
     if must:
@@ -68,6 +84,8 @@ def build_search_query(request: SearchRequest) -> dict:
             {"likes": {"order": "desc", "missing": "_last"}},
             {"comments": {"order": "desc", "missing": "_last"}},
         ]
+    elif request.sort == "viral":
+        sort = [{"viral_score": {"order": "desc", "missing": "_last"}}]
     elif request.sort == "relevance" and request.q:
         sort = ["_score", {"likes": {"order": "desc", "missing": "_last"}}]
     else:
@@ -80,5 +98,6 @@ def build_search_query(request: SearchRequest) -> dict:
             "platforms": {"terms": {"field": "platform", "size": 10}},
             "ad_types": {"terms": {"field": "ad_type", "size": 10}},
             "categories": {"terms": {"field": "category", "size": 20}},
+            "categories_l1": {"terms": {"field": "category_l1", "size": 20}},
         },
     }

@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { Search, LayoutDashboard, Bookmark, LogOut } from 'lucide-react'
+import { Search, LayoutDashboard, Bookmark, ShoppingBag, Users, LogOut } from 'lucide-react'
 import { useAuthStore } from '../../stores/authStore'
 
 export default function Header() {
@@ -45,6 +45,20 @@ export default function Header() {
             >
               <Bookmark size={18} />
               Boards
+            </Link>
+            <Link
+              to="/tiktok-shop"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-100 text-sm font-medium"
+            >
+              <ShoppingBag size={18} />
+              TikTok Shop
+            </Link>
+            <Link
+              to="/advertisers"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-100 text-sm font-medium"
+            >
+              <Users size={18} />
+              Advertisers
             </Link>
           </nav>
 
