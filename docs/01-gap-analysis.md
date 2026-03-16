@@ -513,6 +513,7 @@ Estimation / Calculation:
 **Phase 1 (MVP — Tháng 1-3):**
 - Gap 1 (VN Focus) + Gap 3 (Freemium) → Free tool cho VN market
 - Core: Facebook + TikTok ad search, tiếng Việt, free tier thực sự dùng được
+- **Note:** Code hiện tại chưa implement giới hạn 50 searches/ngày cho free tier (search unlimited cho tất cả tiers). Cần revisit quyết định này — có thể giữ unlimited search ở MVP để tối đa acquisition, chỉ gate ở Phase 2 khi có paid tiers.
 
 **Phase 2 (Growth — Tháng 4-6):**
 - Gap 4 (Alerts) → Competitor monitoring + daily digest

@@ -9,7 +9,7 @@
 
 **Sản phẩm:** Nền tảng Ad Intelligence đầu tiên tập trung vào thị trường Việt Nam và Đông Nam Á, tích hợp AI phân tích creative, với mô hình freemium giúp mọi seller/marketer đều có thể tiếp cận.
 
-**Tên dự kiến:** AdVN / SpyAds VN / AdScope (cần research thêm)
+**Tên sản phẩm:** AdSight
 
 **Tagline:** "Biết đối thủ chạy ads gì — trước khi họ biết bạn đang theo dõi"
 

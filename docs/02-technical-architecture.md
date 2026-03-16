@@ -168,17 +168,17 @@ class Ad:
     headline: str | None
     body_text: str | None
     cta_type: str | None         # "shop_now", "learn_more", etc.
-    media_urls: list[str]        # URLs gốc
-    media_s3_keys: list[str]     # URLs đã lưu
+    media_urls: JSONB | None       # URLs gốc (default=None, tránh mutable default)
+    media_s3_keys: JSONB | None    # URLs đã lưu (default=None)
     thumbnail_url: str | None
     landing_page_url: str | None
 
     # Targeting
-    target_countries: list[str]
+    target_countries: JSONB | None  # (default=None)
     target_age_min: int | None
     target_age_max: int | None
     target_gender: str | None
-    target_interests: list[str]
+    target_interests: JSONB | None  # (default=None)
 
     # Performance (estimated)
     impressions_lower: int | None
@@ -192,7 +192,7 @@ class Ad:
     # Classification
     language: str               # detected language
     category: str | None        # auto-classified
-    tags: list[str]            # auto + manual tags
+    tags: JSONB | None           # auto + manual tags (default=None)
     sentiment: float | None     # -1 to 1
 
     # Metadata
@@ -689,7 +689,7 @@ services:
     build: ./backend
     ports: ["8000:8000"]
     environment:
-      - DATABASE_URL=postgresql://user:pass@postgres:5432/adspy
+      - DATABASE_URL=postgresql://user:pass@postgres:5432/adsight
       - REDIS_URL=redis://redis:6379
       - ELASTICSEARCH_URL=http://elasticsearch:9200
     volumes:
@@ -716,7 +716,8 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
   elasticsearch:
-    image: elasticsearch:8.12.0
+    build:
+      context: ./elasticsearch   # Custom Dockerfile cài analysis-icu plugin
     ports: ["9200:9200"]
     environment:
       - discovery.type=single-node

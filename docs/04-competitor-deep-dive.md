@@ -27,7 +27,7 @@
     BigSpy              │
     ($9-99)             │
                         │
-    ★ OUR PRODUCT ★     │
+    ★ AdSight ★          │
     (Free-$79)          │
                         │
                     LOW PRICE
@@ -48,7 +48,7 @@ PiPiADS           │  ★★     │ ★★★★★ │  ✗    │  ★★★
 Foreplay          │  ★★★    │ ★★★   │  ✗    │   ✗    │ ★★★    │  ✗    │ ★★★★
 AdHeart           │  ★★★★   │   ✗   │  ✗    │   ✗    │   ✗    │  ✗    │  ✗
 ──────────────────┼─────────┼───────┼───────┼────────┼────────┼───────┼──────
-★ OUR PRODUCT ★   │  ★★★★   │ ★★★★  │ ★★★   │ ★★★★★  │ ★★★★★  │★★★★★ │ ★★★
+★ AdSight ★   │  ★★★★   │ ★★★★  │ ★★★   │ ★★★★★  │ ★★★★★  │★★★★★ │ ★★★
 (Target Phase 3)  │         │       │       │        │        │       │
 ```
 
@@ -327,7 +327,7 @@ AdHeart           │  ★★★★   │   ✗   │  ✗    │   ✗    │  
 
 ## 4. Competitive Advantages Summary
 
-### 4.1 Điểm khác biệt cốt lõi của sản phẩm ta
+### 4.1 Điểm khác biệt cốt lõi của AdSight
 
 ```
 1. VN-FIRST APPROACH
