@@ -33,7 +33,7 @@ export default function Register() {
             <div className="w-10 h-10 bg-primary-600 rounded-xl flex items-center justify-center">
               <span className="text-white font-bold">AD</span>
             </div>
-            <span className="text-2xl font-bold text-gray-900">AdSpy VN</span>
+            <span className="text-2xl font-bold text-gray-900">AdSight</span>
           </Link>
           <p className="text-gray-500 mt-2">Tao tai khoan mien phi</p>
         </div>

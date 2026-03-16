@@ -33,7 +33,7 @@ shell:
 	docker compose exec api bash
 
 shell-db:
-	docker compose exec postgres psql -U adspy -d adspy
+	docker compose exec postgres psql -U adsight -d adsight
 
 # Database
 migrate:

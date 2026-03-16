@@ -44,7 +44,7 @@ export default function Landing() {
             <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-sm">AD</span>
             </div>
-            <span className="font-bold text-xl">AdSpy VN</span>
+            <span className="font-bold text-xl">AdSight</span>
           </div>
           <div className="flex items-center gap-3">
             <Link to="/login" className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg">
@@ -87,7 +87,7 @@ export default function Landing() {
 
       {/* Features */}
       <section className="max-w-6xl mx-auto px-4 py-16">
-        <h2 className="text-2xl font-bold text-center text-gray-900 mb-12">Tai sao chon AdSpy VN?</h2>
+        <h2 className="text-2xl font-bold text-center text-gray-900 mb-12">Tai sao chon AdSight?</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {features.map((feature) => (
             <div key={feature.title} className="p-6 rounded-xl border border-gray-200 hover:shadow-md transition-shadow">
@@ -161,7 +161,7 @@ export default function Landing() {
       {/* Footer */}
       <footer className="border-t border-gray-100 py-8">
         <div className="max-w-6xl mx-auto px-4 text-center text-sm text-gray-400">
-          <p>AdSpy VN - Nen tang Ad Intelligence cho thi truong Viet Nam</p>
+          <p>AdSight - Nen tang Ad Intelligence cho thi truong Viet Nam</p>
         </div>
       </footer>
     </div>

@@ -3,13 +3,13 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     # App
-    app_name: str = "AdSpy"
+    app_name: str = "AdSight"
     app_env: str = "development"
     secret_key: str = "change-me-in-production"
     debug: bool = True
 
     # PostgreSQL
-    database_url: str = "postgresql+asyncpg://adspy:adspy_dev_password@postgres:5432/adspy"
+    database_url: str = "postgresql+asyncpg://adsight:adsight_dev_password@postgres:5432/adsight"
 
     # Elasticsearch
     elasticsearch_url: str = "http://elasticsearch:9200"
@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     minio_endpoint: str = "minio:9000"
     minio_access_key: str = "minioadmin"
     minio_secret_key: str = "minioadmin"
-    minio_bucket: str = "adspy-media"
+    minio_bucket: str = "adsight-media"
     minio_use_ssl: bool = False
 
     # JWT
