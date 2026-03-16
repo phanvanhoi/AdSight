@@ -78,14 +78,10 @@ services:
     env_file: .env.production
     expose:
       - "5432"
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-adsight}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB:-adsight}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-adsight}"]
+      test: ["CMD-SHELL", "pg_isready -U adsight"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -134,9 +130,6 @@ services:
       - "9000"
     ports:
       - "9001:9001"
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
-      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
     volumes:
       - minio_data:/data
     command: server /data --console-address ":9001"
