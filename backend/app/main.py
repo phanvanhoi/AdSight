@@ -2,6 +2,8 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from pydantic import ValidationError
 
 from app.config import settings
 from app.core.database import engine
@@ -31,11 +33,20 @@ app = FastAPI(
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=settings.allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Handle Pydantic ValidationError from manual model construction as 422
+@app.exception_handler(ValidationError)
+async def pydantic_validation_handler(request, exc):
+    errors = []
+    for err in exc.errors():
+        clean = {k: v for k, v in err.items() if k != "ctx"}
+        errors.append(clean)
+    return JSONResponse(status_code=422, content={"detail": errors})
 
 # Routes
 app.include_router(api_router, prefix="/api")

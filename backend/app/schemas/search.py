@@ -1,7 +1,7 @@
+from datetime import date, datetime
 from uuid import UUID
-from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_validator
 
 
 class SearchRequest(BaseModel):
@@ -13,8 +13,18 @@ class SearchRequest(BaseModel):
     date_to: str | None = None
     min_likes: int | None = None
     sort: str = "relevance"
-    page: int = 1
-    limit: int = 20
+    page: int = Field(default=1, ge=1)
+    limit: int = Field(default=20, ge=1, le=100)
+
+    @field_validator("date_from", "date_to")
+    @classmethod
+    def validate_date_format(cls, v: str | None) -> str | None:
+        if v is not None:
+            try:
+                date.fromisoformat(v)
+            except ValueError:
+                raise ValueError("Date must be in YYYY-MM-DD format")
+        return v
 
 
 class AdSummary(BaseModel):
@@ -39,6 +49,11 @@ class Facets(BaseModel):
     platforms: dict[str, int] = {}
     ad_types: dict[str, int] = {}
     categories: dict[str, int] = {}
+
+
+class ExportSearchRequest(SearchRequest):
+    """SearchRequest variant for export — no upper limit on results."""
+    limit: int = Field(default=100, ge=1)
 
 
 class SearchResponse(BaseModel):

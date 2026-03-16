@@ -1,6 +1,10 @@
+import logging
+
 from elasticsearch import AsyncElasticsearch
 
 from app.config import settings
+
+logger = logging.getLogger(__name__)
 
 
 class ESClient:
@@ -12,6 +16,13 @@ class ESClient:
             hosts=[settings.elasticsearch_url],
             request_timeout=30,
         )
+        # Health check on initialization
+        try:
+            info = await self._client.info()
+            logger.info(f"Connected to Elasticsearch {info['version']['number']}")
+        except Exception as e:
+            logger.error(f"Elasticsearch connection failed: {e}")
+            raise
 
     @property
     def client(self) -> AsyncElasticsearch:

@@ -1,4 +1,4 @@
-from sqlalchemy import String, Integer, Float, Text
+from sqlalchemy import String, Integer, Float, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import BaseModel
@@ -6,6 +6,9 @@ from app.models.base import BaseModel
 
 class Advertiser(BaseModel):
     __tablename__ = "advertisers"
+    __table_args__ = (
+        UniqueConstraint("platform", "platform_advertiser_id", name="uq_advertiser_platform_id"),
+    )
 
     platform: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
     platform_advertiser_id: Mapped[str] = mapped_column(String(255), nullable=False, index=True)

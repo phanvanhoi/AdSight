@@ -38,6 +38,20 @@ class Settings(BaseSettings):
     # TikTok
     tiktok_api_base_url: str = "https://ads.tiktok.com/creative_radar_api/v1"
 
+    # CORS
+    cors_origins: list[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
+    cors_origins_str: str = ""  # Comma-separated, overrides cors_origins if set
+
+    @property
+    def allowed_origins(self) -> list[str]:
+        if self.cors_origins_str:
+            return [o.strip() for o in self.cors_origins_str.split(",")]
+        return self.cors_origins
+
+    # Database pool
+    db_pool_size: int = 20
+    db_max_overflow: int = 10
+
     # Celery
     celery_broker_url: str = "redis://redis:6379/1"
     celery_result_backend: str = "redis://redis:6379/2"

@@ -13,7 +13,9 @@ async def search_ads(es: AsyncElasticsearch, request: SearchRequest) -> SearchRe
 
     response = await es.search(
         index=settings.es_ads_index,
-        body=query,
+        query=query.get("query"),
+        sort=query.get("sort"),
+        aggs=query.get("aggs"),
         from_=offset,
         size=request.limit,
     )

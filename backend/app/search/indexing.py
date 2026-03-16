@@ -100,7 +100,11 @@ async def create_ads_index(es: AsyncElasticsearch):
     index = settings.es_ads_index
     exists = await es.indices.exists(index=index)
     if not exists:
-        await es.indices.create(index=index, body=ADS_INDEX_SETTINGS)
+        await es.indices.create(
+            index=index,
+            settings=ADS_INDEX_SETTINGS["settings"],
+            mappings=ADS_INDEX_SETTINGS["mappings"],
+        )
         print(f"Created index '{index}' with Vietnamese analyzer")
     else:
         print(f"Index '{index}' already exists")
@@ -110,7 +114,7 @@ async def index_ad(es: AsyncElasticsearch, ad_id: str, ad_data: dict):
     await es.index(
         index=settings.es_ads_index,
         id=ad_id,
-        body=ad_data,
+        document=ad_data,
     )
 
 
@@ -119,8 +123,9 @@ async def bulk_index_ads(es: AsyncElasticsearch, ads: list[dict]):
         return
     actions = []
     for ad in ads:
-        ad_id = ad.pop("id", None) or ad.get("platform_ad_id")
+        ad_copy = ad.copy()
+        ad_id = ad_copy.pop("id", None) or ad_copy.get("platform_ad_id")
         actions.append({"index": {"_index": settings.es_ads_index, "_id": str(ad_id)}})
-        actions.append(ad)
+        actions.append(ad_copy)
 
-    await es.bulk(body=actions, refresh="wait_for")
+    await es.bulk(operations=actions, refresh="wait_for")

@@ -3,7 +3,7 @@ from fastapi.responses import StreamingResponse
 
 from app.dependencies import get_current_user
 from app.models.user import User
-from app.schemas.search import SearchRequest
+from app.schemas.search import ExportSearchRequest
 from app.search.es_client import get_es
 from app.services.export_service import export_ads_csv
 
@@ -23,10 +23,12 @@ async def export_csv(
     user: User = Depends(get_current_user),
     es=Depends(get_es),
 ):
-    request = SearchRequest(
+    tier_limits = {"free": 100, "pro": 5000, "enterprise": 50000}
+    export_limit = tier_limits.get(user.tier, 100)
+    request = ExportSearchRequest(
         q=q, platform=platform, country=country, ad_type=ad_type,
         date_from=date_from, date_to=date_to, min_likes=min_likes,
-        sort=sort, page=1, limit=100 if user.tier == "free" else 1000,
+        sort=sort, page=1, limit=export_limit,
     )
     csv_content = await export_ads_csv(es, request)
     return StreamingResponse(

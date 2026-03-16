@@ -118,6 +118,13 @@ async def remove_ad_from_board(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    # Verify board ownership
+    result = await db.execute(
+        select(Board).where(Board.id == board_id, Board.user_id == user.id)
+    )
+    if not result.scalar_one_or_none():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Board not found")
+
     result = await db.execute(
         select(BoardAd).where(BoardAd.board_id == board_id, BoardAd.ad_id == ad_id)
     )

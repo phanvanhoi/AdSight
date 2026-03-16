@@ -1,5 +1,6 @@
-import asyncio
 import logging
+
+from asgiref.sync import async_to_sync
 
 from app.celery_app import celery
 from app.collectors.meta_collector import MetaCollector, VN_SEARCH_TERMS
@@ -9,15 +10,6 @@ from app.core.database import async_session
 from app.search.es_client import es_client
 
 logger = logging.getLogger(__name__)
-
-
-def run_async(coro):
-    """Helper to run async code in sync Celery task."""
-    loop = asyncio.new_event_loop()
-    try:
-        return loop.run_until_complete(coro)
-    finally:
-        loop.close()
 
 
 async def _collect_meta():
@@ -40,7 +32,7 @@ async def _collect_meta():
                     total_new += new_count
                     logger.info(f"[meta] '{term}': {new_count} new ads")
         except Exception as e:
-            logger.error(f"[meta] Error collecting '{term}': {e}")
+            logger.error(f"[meta] Error collecting '{term}': {e}", exc_info=True)
 
     await es_client.close()
     return total_new
@@ -64,26 +56,34 @@ async def _collect_tiktok():
                 logger.info(f"[tiktok] {new_count} new ads")
                 return new_count
     except Exception as e:
-        logger.error(f"[tiktok] Error: {e}")
+        logger.error(f"[tiktok] Error: {e}", exc_info=True)
     finally:
         await es_client.close()
 
     return 0
 
 
-@celery.task(name="app.tasks.collection_tasks.collect_meta_ads")
+@celery.task(
+    name="app.tasks.collection_tasks.collect_meta_ads",
+    time_limit=300,
+    soft_time_limit=240,
+)
 def collect_meta_ads():
     """Scheduled task: collect ads from Meta Ad Library."""
     logger.info("Starting Meta ads collection...")
-    total = run_async(_collect_meta())
+    total = async_to_sync(_collect_meta)()
     logger.info(f"Meta collection complete. {total} new ads.")
     return total
 
 
-@celery.task(name="app.tasks.collection_tasks.collect_tiktok_ads")
+@celery.task(
+    name="app.tasks.collection_tasks.collect_tiktok_ads",
+    time_limit=300,
+    soft_time_limit=240,
+)
 def collect_tiktok_ads():
     """Scheduled task: collect ads from TikTok Creative Center."""
     logger.info("Starting TikTok ads collection...")
-    total = run_async(_collect_tiktok())
+    total = async_to_sync(_collect_tiktok)()
     logger.info(f"TikTok collection complete. {total} new ads.")
     return total

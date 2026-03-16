@@ -8,6 +8,7 @@ from app.core.database import get_db
 from app.dependencies import get_optional_user
 from app.models.ad import Ad
 from app.models.user import User
+from app.schemas.ad import AdDetailResponse
 from app.schemas.search import SearchRequest, SearchResponse
 from app.search.es_client import get_es
 from app.services.search_service import search_ads
@@ -45,7 +46,7 @@ async def search(
     return await search_ads(es, request)
 
 
-@router.get("/{ad_id}")
+@router.get("/{ad_id}", response_model=AdDetailResponse)
 async def get_ad_detail(
     ad_id: UUID,
     db: AsyncSession = Depends(get_db),

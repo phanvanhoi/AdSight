@@ -99,6 +99,18 @@ class MetaCollector(BaseCollector):
 
         return all_ads
 
+    @staticmethod
+    def _detect_ad_type(raw_ad: dict) -> str:
+        """Infer ad type from available creative data."""
+        snapshot_url = raw_ad.get("ad_snapshot_url", "")
+        bodies = raw_ad.get("ad_creative_bodies", [])
+        link_titles = raw_ad.get("ad_creative_link_titles", [])
+        if len(bodies) > 1 or len(link_titles) > 1:
+            return "carousel"
+        if "video" in snapshot_url.lower():
+            return "video"
+        return "image"
+
     def normalize(self, raw_ad: dict) -> dict:
         """Convert Meta Ad Library format to internal schema."""
         now = datetime.now(timezone.utc).isoformat()
@@ -140,7 +152,7 @@ class MetaCollector(BaseCollector):
             "advertiser_id": raw_ad.get("page_id", ""),
             "advertiser_name": raw_ad.get("page_name", ""),
             "advertiser_page_url": f"https://facebook.com/{raw_ad.get('page_id', '')}",
-            "ad_type": "image",  # Meta Ad Library doesn't distinguish well
+            "ad_type": self._detect_ad_type(raw_ad),
             "headline": headline,
             "body_text": body_text,
             "cta_type": None,
