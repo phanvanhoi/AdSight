@@ -6,7 +6,8 @@ from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from app.config import settings
-from app.models import Base
+# Import Base and ALL models so Alembic detects them for autogenerate
+from app.models import Base, User, Ad, Advertiser, Board, BoardAd  # noqa: F401
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.database_url)
