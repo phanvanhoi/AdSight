@@ -13,6 +13,22 @@ from app.api.health import router as health_router
 from app.api.router import api_router
 
 
+async def _ensure_es_index():
+    """Create ES index if it doesn't exist (auto-setup on first deploy)."""
+    try:
+        from app.search.indexing import ADS_INDEX_SETTINGS
+        es = es_client.client
+        index = settings.es_ads_index
+        if not await es.indices.exists(index=index):
+            await es.indices.create(
+                index=index,
+                settings=ADS_INDEX_SETTINGS["settings"],
+                mappings=ADS_INDEX_SETTINGS["mappings"],
+            )
+    except Exception:
+        pass  # Non-fatal — init_es script can still be used manually
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup — Redis/ES are optional, app should still serve auth & API
@@ -22,6 +38,7 @@ async def lifespan(app: FastAPI):
         pass  # Rate limiting degrades gracefully
     try:
         await es_client.initialize()
+        await _ensure_es_index()
     except Exception:
         pass  # Search unavailable but auth/CRUD still work
     yield
