@@ -13,5 +13,8 @@ export interface UserProfile {
   subscription_status: string | null
   usage: UserUsage
   email_alerts_enabled: boolean
+  daily_digest_enabled: boolean
+  telegram_connected: boolean
+  telegram_enabled: boolean
   stripe_publishable_key: string
 }

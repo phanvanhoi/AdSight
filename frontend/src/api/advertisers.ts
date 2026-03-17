@@ -1,5 +1,5 @@
 import client from './client'
-import type { AdvertiserGroupsResponse, AdvertiserGroupDetail, AdvertiserAd } from '../types/advertiser'
+import type { AdvertiserGroupsResponse, AdvertiserGroupDetail, AdvertiserAd, AdvertiserAnalytics } from '../types/advertiser'
 
 export async function listAdvertiserGroups(params?: {
   q?: string
@@ -13,6 +13,11 @@ export async function listAdvertiserGroups(params?: {
 
 export async function getAdvertiserGroup(groupId: string): Promise<AdvertiserGroupDetail> {
   const res = await client.get(`/advertisers/${groupId}`)
+  return res.data
+}
+
+export async function getAdvertiserAnalytics(groupId: string): Promise<AdvertiserAnalytics> {
+  const res = await client.get(`/advertisers/${groupId}/analytics`)
   return res.data
 }
 

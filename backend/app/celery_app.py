@@ -62,6 +62,35 @@ celery.conf.beat_schedule = {
         "task": "check_competitor_ads",
         "schedule": crontab(minute=10, hour="*/2"),
     },
+    "send-daily-digest": {
+        "task": "send_daily_digest",
+        "schedule": crontab(hour=0, minute=0),  # 00:00 UTC = 07:00 VN
+    },
+    # --- Data lifecycle ---
+    "lifecycle-mark-expired-daily": {
+        "task": "lifecycle.mark_expired_ads",
+        "schedule": crontab(minute=0, hour=5),  # 5 AM UTC daily
+    },
+    "lifecycle-update-hot-every-2h": {
+        "task": "lifecycle.update_hot_ads",
+        "schedule": crontab(minute=20, hour="*/2"),
+    },
+    "lifecycle-archive-stale-weekly": {
+        "task": "lifecycle.archive_stale_ads",
+        "schedule": crontab(minute=0, hour=6, day_of_week="sunday"),
+    },
+    "lifecycle-dedupe-daily": {
+        "task": "lifecycle.dedupe_ads",
+        "schedule": crontab(minute=30, hour=5),  # 5:30 AM UTC daily
+    },
+    "lifecycle-cleanup-incomplete-daily": {
+        "task": "lifecycle.cleanup_incomplete",
+        "schedule": crontab(minute=45, hour=5),  # 5:45 AM UTC daily
+    },
+    "lifecycle-purge-old-weekly": {
+        "task": "lifecycle.purge_old_ads",
+        "schedule": crontab(minute=30, hour=6, day_of_week="sunday"),
+    },
 }
 
 # Auto-discover tasks

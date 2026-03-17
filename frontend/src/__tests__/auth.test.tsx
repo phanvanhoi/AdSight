@@ -134,7 +134,7 @@ describe('Register', () => {
 
     expect(screen.getByPlaceholderText('Nguyen Van A')).toBeInTheDocument()
     expect(screen.getByPlaceholderText('email@example.com')).toBeInTheDocument()
-    expect(screen.getByPlaceholderText('Toi thieu 6 ky tu')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('Toi thieu 8 ky tu')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Dang ky' })).toBeInTheDocument()
   })
 
@@ -151,7 +151,7 @@ describe('Register', () => {
 
     await user.type(screen.getByPlaceholderText('Nguyen Van A'), 'Nguyen Van A')
     await user.type(screen.getByPlaceholderText('email@example.com'), 'new@test.com')
-    await user.type(screen.getByPlaceholderText('Toi thieu 6 ky tu'), 'password123')
+    await user.type(screen.getByPlaceholderText('Toi thieu 8 ky tu'), 'password123')
     await user.click(screen.getByRole('button', { name: 'Dang ky' }))
 
     await waitFor(() => {
@@ -170,7 +170,7 @@ describe('Register', () => {
 
     await user.type(screen.getByPlaceholderText('Nguyen Van A'), 'Test')
     await user.type(screen.getByPlaceholderText('email@example.com'), 'dup@test.com')
-    await user.type(screen.getByPlaceholderText('Toi thieu 6 ky tu'), 'password123')
+    await user.type(screen.getByPlaceholderText('Toi thieu 8 ky tu'), 'password123')
     await user.click(screen.getByRole('button', { name: 'Dang ky' }))
 
     await waitFor(() => {

@@ -34,7 +34,16 @@ export async function getMe() {
   return res.data as UserProfile
 }
 
-export async function updateSettings(data: { email_alerts_enabled?: boolean; full_name?: string }) {
+export async function updateSettings(data: { email_alerts_enabled?: boolean; daily_digest_enabled?: boolean; telegram_enabled?: boolean; full_name?: string }) {
   const res = await client.patch('/auth/settings', data)
   return res.data
+}
+
+export async function connectTelegram() {
+  const res = await client.post('/auth/telegram/connect')
+  return res.data as { connect_url: string; token: string }
+}
+
+export async function disconnectTelegram() {
+  await client.post('/auth/telegram/disconnect')
 }

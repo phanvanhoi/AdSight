@@ -1,34 +1,43 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Download, LayoutGrid, List } from 'lucide-react'
+import { Download, LayoutGrid, List, SlidersHorizontal } from 'lucide-react'
 import { searchAds, exportCsv } from '../api/ads'
 import SearchBar from '../components/search/SearchBar'
-import FilterPanel from '../components/search/FilterPanel'
+import FilterPanel, { defaultFilters, type FilterState } from '../components/search/FilterPanel'
 import AdGrid from '../components/search/AdGrid'
 import type { SearchParams } from '../types/ad'
 
+function filtersToParams(filters: FilterState, q: string, page: number, limit: number): SearchParams {
+  return {
+    q,
+    platform: filters.platform || undefined,
+    country: filters.country || undefined,
+    ad_type: filters.ad_type || undefined,
+    date_from: filters.date_from || undefined,
+    date_to: filters.date_to || undefined,
+    min_likes: filters.min_likes ? parseInt(filters.min_likes) : undefined,
+    category_l1: filters.category_l1 || undefined,
+    min_spend: filters.min_spend ? parseFloat(filters.min_spend) : undefined,
+    max_spend: filters.max_spend ? parseFloat(filters.max_spend) : undefined,
+    min_viral_score: filters.min_viral_score ? parseFloat(filters.min_viral_score) : undefined,
+    is_hot: filters.is_hot || undefined,
+    has_discount: filters.has_discount || undefined,
+    sort: filters.sort,
+    page,
+    limit,
+  }
+}
+
 export default function Search() {
   const navigate = useNavigate()
-  const [params, setParams] = useState<SearchParams>({
-    q: '',
-    platform: '',
-    country: 'VN',
-    ad_type: '',
-    sort: 'newest',
-    min_likes: undefined,
-    page: 1,
-    limit: 20,
-  })
-
+  const [query, setQuery] = useState('')
+  const [page, setPage] = useState(1)
+  const [filters, setFilters] = useState<FilterState>({ ...defaultFilters })
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
 
-  const [filters, setFilters] = useState({
-    country: 'VN',
-    ad_type: '',
-    sort: 'newest',
-    min_likes: '',
-  })
+  const params = filtersToParams(filters, query, page, 20)
 
   const { data, isLoading } = useQuery({
     queryKey: ['ads', params],
@@ -36,42 +45,56 @@ export default function Search() {
   })
 
   const handleSearch = (q: string) => {
-    setParams((prev) => ({ ...prev, q, page: 1 }))
+    setQuery(q)
+    setPage(1)
   }
 
-  const handlePlatformChange = (platform: string) => {
-    setParams((prev) => ({ ...prev, platform, page: 1 }))
-  }
-
-  const handleFilterChange = (key: string, value: string) => {
+  const handleFilterChange = (key: string, value: string | boolean) => {
     setFilters((prev) => ({ ...prev, [key]: value }))
-    setParams((prev) => ({
-      ...prev,
-      [key]: key === 'min_likes' ? (value ? parseInt(value) : undefined) : value,
-      page: 1,
-    }))
+    setPage(1)
   }
 
-  const handlePageChange = (page: number) => {
-    setParams((prev) => ({ ...prev, page }))
+  const handleReset = () => {
+    setFilters({ ...defaultFilters })
+    setPage(1)
+  }
+
+  const handlePageChange = (p: number) => {
+    setPage(p)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  const totalPages = data ? Math.ceil(data.total / (params.limit || 20)) : 0
+  const totalPages = data ? Math.ceil(data.total / 20) : 0
 
   return (
     <div className="space-y-6">
       <SearchBar
-        initialQuery={params.q}
+        initialQuery={query}
         onSearch={handleSearch}
-        platform={params.platform || ''}
-        onPlatformChange={handlePlatformChange}
+        platform={filters.platform}
+        onPlatformChange={(platform) => handleFilterChange('platform', platform)}
       />
 
+      {/* Mobile filter toggle */}
+      <div className="lg:hidden">
+        <button
+          onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
+          className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700"
+        >
+          <SlidersHorizontal size={16} />
+          Bộ lọc
+        </button>
+        {mobileFiltersOpen && (
+          <div className="mt-3">
+            <FilterPanel filters={filters} onChange={handleFilterChange} onReset={handleReset} facets={data?.facets} />
+          </div>
+        )}
+      </div>
+
       <div className="flex gap-6">
-        {/* Sidebar filters */}
+        {/* Sidebar filters — desktop */}
         <div className="hidden lg:block w-64 flex-shrink-0">
-          <FilterPanel filters={filters} onChange={handleFilterChange} />
+          <FilterPanel filters={filters} onChange={handleFilterChange} onReset={handleReset} facets={data?.facets} />
         </div>
 
         {/* Results */}
@@ -154,10 +177,10 @@ export default function Search() {
                         <td className="px-4 py-3">
                           <span className="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700 capitalize">{ad.platform}</span>
                         </td>
-                        <td className="px-4 py-3 text-right">{ad.likes.toLocaleString()}</td>
-                        <td className="px-4 py-3 text-right">{ad.comments.toLocaleString()}</td>
-                        <td className="px-4 py-3 text-right">{ad.shares.toLocaleString()}</td>
-                        <td className="px-4 py-3 text-right text-gray-500">{ad.days_running}d</td>
+                        <td className="px-4 py-3 text-right">{ad.likes > 0 ? ad.likes.toLocaleString() : '—'}</td>
+                        <td className="px-4 py-3 text-right">{ad.comments > 0 ? ad.comments.toLocaleString() : '—'}</td>
+                        <td className="px-4 py-3 text-right">{ad.shares > 0 ? ad.shares.toLocaleString() : '—'}</td>
+                        <td className="px-4 py-3 text-right text-gray-500">{ad.days_running > 0 ? `${ad.days_running}d` : 'Mới'}</td>
                       </tr>
                     ))
                   )}
@@ -169,17 +192,17 @@ export default function Search() {
           {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex justify-center gap-2 pt-4">
-              {Array.from({ length: Math.min(totalPages, 10) }, (_, i) => i + 1).map((page) => (
+              {Array.from({ length: Math.min(totalPages, 10) }, (_, i) => i + 1).map((p) => (
                 <button
-                  key={page}
-                  onClick={() => handlePageChange(page)}
+                  key={p}
+                  onClick={() => handlePageChange(p)}
                   className={`px-3 py-1.5 text-sm rounded-lg ${
-                    page === params.page
+                    p === page
                       ? 'bg-primary-600 text-white'
                       : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
                   }`}
                 >
-                  {page}
+                  {p}
                 </button>
               ))}
             </div>

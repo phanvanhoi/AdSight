@@ -67,3 +67,51 @@ class TestExport:
         assert resp.status_code == 200
         call_kwargs = mock_es.search.call_args
         assert call_kwargs.kwargs.get("size") == 5000
+
+
+@pytest.mark.asyncio
+class TestAdvancedFilters:
+    async def test_search_with_category_filter(
+        self, async_client: AsyncClient, mock_es
+    ):
+        resp = await async_client.get(
+            "/api/ads/search",
+            params={"q": "kem", "category_l1": "Mỹ phẩm"},
+        )
+        assert resp.status_code == 200
+        # Verify ES was called with category filter in query kwarg
+        call_kwargs = mock_es.search.call_args
+        query = call_kwargs.kwargs.get("query", {})
+        filters = query.get("bool", {}).get("filter", [])
+        cat_filter = [f for f in filters if "term" in f and "category_l1" in f.get("term", {})]
+        assert len(cat_filter) == 1
+
+    async def test_search_with_spend_range(
+        self, async_client: AsyncClient, mock_es
+    ):
+        resp = await async_client.get(
+            "/api/ads/search",
+            params={"q": "", "min_spend": 10, "max_spend": 100},
+        )
+        assert resp.status_code == 200
+
+    async def test_search_with_is_hot(
+        self, async_client: AsyncClient, mock_es
+    ):
+        resp = await async_client.get(
+            "/api/ads/search",
+            params={"q": "", "is_hot": True},
+        )
+        assert resp.status_code == 200
+
+    async def test_search_sort_viral(
+        self, async_client: AsyncClient, mock_es
+    ):
+        resp = await async_client.get(
+            "/api/ads/search",
+            params={"q": "", "sort": "viral"},
+        )
+        assert resp.status_code == 200
+        call_kwargs = mock_es.search.call_args
+        sort = call_kwargs.kwargs.get("sort", [])
+        assert sort[0] == {"viral_score": {"order": "desc", "missing": "_last"}}

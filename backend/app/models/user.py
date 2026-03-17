@@ -24,6 +24,11 @@ class User(BaseModel):
 
     # Settings
     email_alerts_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    daily_digest_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+
+    # Telegram
+    telegram_chat_id: Mapped[str | None] = mapped_column(String(50), unique=True, nullable=True)
+    telegram_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
 
     # Usage tracking
     daily_search_count: Mapped[int] = mapped_column(Integer, default=0)

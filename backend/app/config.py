@@ -73,6 +73,10 @@ class Settings(BaseSettings):
     claude_api_key: str = ""
     claude_model: str = "claude-sonnet-4-6"
 
+    # Telegram
+    telegram_bot_token: str = ""
+    telegram_bot_username: str = "AdSightBot"
+
     # Email (SMTP)
     smtp_host: str = ""
     smtp_port: int = 587

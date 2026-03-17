@@ -55,7 +55,7 @@ describe('Boards Page', () => {
     renderWithProviders(<Boards />)
 
     await waitFor(() => {
-      expect(screen.getByText('Chua co board nao')).toBeInTheDocument()
+      expect(screen.getByText('Chưa có board nào')).toBeInTheDocument()
     })
   })
 
@@ -72,12 +72,12 @@ describe('Boards Page', () => {
     renderWithProviders(<Boards />)
 
     // Click "Tao board" to show create form
-    await user.click(screen.getByRole('button', { name: /Tao board/i }))
+    await user.click(screen.getByRole('button', { name: /Tạo board/i }))
 
     // Fill in board name and submit
-    const input = screen.getByPlaceholderText('Ten board...')
+    const input = screen.getByPlaceholderText('Tên board...')
     await user.type(input, 'My Board')
-    await user.click(screen.getByRole('button', { name: 'Tao' }))
+    await user.click(screen.getByRole('button', { name: 'Tạo' }))
 
     await waitFor(() => {
       expect(createBoard).toHaveBeenCalledWith('My Board')
@@ -113,7 +113,7 @@ describe('Boards Page', () => {
     renderWithProviders(<Boards />)
 
     await waitFor(() => {
-      expect(screen.getByText('Chon 1 board de xem ads da luu')).toBeInTheDocument()
+      expect(screen.getByText('Chọn 1 board để xem ads đã lưu')).toBeInTheDocument()
     })
   })
 

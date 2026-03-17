@@ -12,6 +12,8 @@ from sqlalchemy.pool import StaticPool
 from app.core.security import create_access_token, hash_password
 from app.models.base import Base
 from app.models.user import User
+from app.models.ad import Ad
+from app.models.competitor_alert import CompetitorAlert
 from app.models import *  # noqa: F401,F403 — ensure all models register with Base.metadata
 
 
@@ -86,6 +88,7 @@ def mock_es():
             "platforms": {"buckets": []},
             "ad_types": {"buckets": []},
             "categories": {"buckets": []},
+            "categories_l1": {"buckets": []},
         },
     })
     es.count = AsyncMock(return_value={"count": 0})
@@ -217,3 +220,64 @@ def sample_ad_data():
         "shares": 5,
         "is_active": True,
     }
+
+
+@pytest_asyncio.fixture
+async def agency_user(db: AsyncSession) -> User:
+    """Create an agency-tier user."""
+    user = User(
+        email="agency@example.com",
+        hashed_password=hash_password(TEST_PASSWORD),
+        full_name="Agency User",
+        is_active=True,
+        tier="agency",
+    )
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
+    return user
+
+
+@pytest_asyncio.fixture
+async def sample_ad(db: AsyncSession) -> Ad:
+    """Create a sample ad in the database."""
+    ad = Ad(
+        platform="meta",
+        platform_ad_id="test_ad_001",
+        advertiser_name="Test Store",
+        ad_type="image",
+        headline="Kem chống nắng SPF50 giảm 30%",
+        body_text="Sản phẩm bán chạy nhất mùa hè",
+        target_countries=["VN"],
+        likes=500,
+        comments=20,
+        shares=10,
+        is_active=True,
+        category_l1="Mỹ phẩm",
+        category_l2="Kem chống nắng",
+        viral_score=65.0,
+        engagement_rate=3.2,
+        estimated_daily_spend=50.0,
+        estimated_total_spend=1500.0,
+    )
+    db.add(ad)
+    await db.commit()
+    await db.refresh(ad)
+    return ad
+
+
+@pytest_asyncio.fixture
+async def sample_alert(db: AsyncSession, test_user: User) -> CompetitorAlert:
+    """Create a sample competitor alert."""
+    alert = CompetitorAlert(
+        user_id=test_user.id,
+        name="Test Alert",
+        alert_type="advertiser_name",
+        match_value="Shopee",
+        platforms=["meta", "tiktok"],
+        is_active=True,
+    )
+    db.add(alert)
+    await db.commit()
+    await db.refresh(alert)
+    return alert

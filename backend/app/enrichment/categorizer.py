@@ -20,13 +20,18 @@ CATEGORY_RULES: dict[str, dict] = {
             "kem", "serum", "son", "mỹ phẩm", "skincare", "makeup", "trang điểm",
             "dưỡng da", "chống nắng", "kcn", "toner", "sữa rửa mặt", "mặt nạ",
             "collagen", "retinol", "niacinamide", "vitamin c", "kem nền", "phấn",
+            "kem lót", "primer", "concealer", "blush", "phấn má", "mascara",
+            "kẻ mắt", "eyeliner", "kem mắt", "eye cream", "tẩy tế bào chết",
+            "body lotion", "kem body", "dầu gội", "sữa tắm", "kem đánh răng",
         ],
         "subcategories": {
             "Kem chống nắng": ["chống nắng", "kcn", "spf", "sunscreen", "uv"],
             "Serum/Tinh chất": ["serum", "tinh chất", "essence", "ampoule"],
             "Son môi": ["son", "lipstick", "lip"],
-            "Kem nền/Trang điểm": ["kem nền", "foundation", "phấn", "makeup", "trang điểm"],
+            "Kem nền/Trang điểm": ["kem nền", "foundation", "phấn", "makeup", "trang điểm", "concealer", "primer"],
             "Chăm sóc da": ["dưỡng da", "skincare", "toner", "sữa rửa mặt", "mặt nạ", "kem dưỡng"],
+            "Nước hoa": ["nước hoa", "perfume", "cologne", "eau de"],
+            "Chăm sóc tóc": ["dầu gội", "dầu xả", "dưỡng tóc", "serum tóc", "shampoo"],
         },
     },
     "Thời trang": {
@@ -47,11 +52,14 @@ CATEGORY_RULES: dict[str, dict] = {
         "keywords": [
             "iphone", "samsung", "laptop", "điện thoại", "smartphone", "tablet",
             "tai nghe", "sạc", "ốp lưng", "camera", "máy tính", "pc", "gaming",
+            "airpods", "earbuds", "powerbank", "sạc dự phòng", "smartwatch",
+            "màn hình", "bàn phím", "chuột", "loa bluetooth",
         ],
         "subcategories": {
             "Điện thoại": ["iphone", "samsung", "oppo", "xiaomi", "điện thoại", "smartphone"],
             "Laptop/PC": ["laptop", "máy tính", "pc", "gaming", "notebook"],
-            "Phụ kiện": ["tai nghe", "sạc", "ốp lưng", "cáp", "adapter", "pin"],
+            "Phụ kiện": ["tai nghe", "sạc", "ốp lưng", "cáp", "adapter", "pin", "airpods", "earbuds", "powerbank"],
+            "Smartwatch": ["smartwatch", "đồng hồ thông minh", "apple watch"],
         },
     },
     "F&B": {
@@ -68,38 +76,55 @@ CATEGORY_RULES: dict[str, dict] = {
     "Giáo dục": {
         "keywords": [
             "khóa học", "học", "ielts", "toeic", "lập trình", "tiếng anh", "đào tạo",
+            "chứng chỉ", "online course", "e-learning", "mentor", "bootcamp",
         ],
         "subcategories": {
-            "Ngoại ngữ": ["ielts", "toeic", "tiếng anh", "tiếng hàn", "tiếng nhật"],
-            "IT/Lập trình": ["lập trình", "python", "java", "web", "data", "code"],
-            "Kỹ năng": ["marketing", "kinh doanh", "bán hàng", "quản lý"],
+            "Ngoại ngữ": ["ielts", "toeic", "tiếng anh", "tiếng hàn", "tiếng nhật", "tiếng trung"],
+            "IT/Lập trình": ["lập trình", "python", "java", "web", "data", "code", "ai", "machine learning"],
+            "Kỹ năng": ["marketing", "kinh doanh", "bán hàng", "quản lý", "digital marketing"],
         },
     },
     "Bất động sản": {
-        "keywords": ["nhà", "đất", "chung cư", "biệt thự", "căn hộ", "bds"],
-        "subcategories": {},
+        "keywords": ["nhà", "đất", "chung cư", "biệt thự", "căn hộ", "bds", "apartment", "villa", "townhouse", "nhà phố"],
+        "subcategories": {
+            "Căn hộ": ["căn hộ", "chung cư", "apartment"],
+            "Biệt thự/Villa": ["biệt thự", "villa"],
+            "Nhà phố": ["nhà phố", "townhouse", "nhà mặt tiền"],
+        },
     },
     "Sức khỏe": {
         "keywords": [
             "gym", "fitness", "yoga", "thực phẩm chức năng", "vitamin", "giảm cân", "sức khỏe",
+            "whey protein", "collagen", "detox", "thể hình", "workout",
         ],
         "subcategories": {
-            "Fitness": ["gym", "fitness", "yoga", "tập"],
-            "TPCN": ["thực phẩm chức năng", "vitamin", "bổ sung"],
-            "Giảm cân": ["giảm cân", "diet", "giảm mỡ"],
+            "Fitness": ["gym", "fitness", "yoga", "tập", "thể hình", "workout"],
+            "TPCN": ["thực phẩm chức năng", "vitamin", "bổ sung", "whey protein", "collagen"],
+            "Giảm cân": ["giảm cân", "diet", "giảm mỡ", "detox", "eo thon"],
         },
     },
     "Du lịch": {
-        "keywords": ["tour", "du lịch", "travel", "khách sạn", "resort", "vé máy bay"],
-        "subcategories": {},
+        "keywords": ["tour", "du lịch", "travel", "khách sạn", "resort", "vé máy bay", "booking", "airbnb", "homestay"],
+        "subcategories": {
+            "Tour": ["tour", "du lịch", "travel"],
+            "Khách sạn": ["khách sạn", "resort", "homestay", "booking", "airbnb"],
+            "Vé": ["vé máy bay", "vé tàu", "vé xe"],
+        },
     },
     "Xe cộ": {
-        "keywords": ["xe máy", "ô tô", "honda", "yamaha", "toyota", "vinfast"],
-        "subcategories": {},
+        "keywords": ["xe máy", "ô tô", "honda", "yamaha", "toyota", "vinfast", "hyundai", "kia", "mazda", "motorcycle"],
+        "subcategories": {
+            "Xe máy": ["xe máy", "honda", "yamaha", "suzuki", "piaggio", "vespa"],
+            "Ô tô": ["ô tô", "toyota", "vinfast", "hyundai", "kia", "mazda", "sedan", "suv"],
+        },
     },
     "Mẹ & Bé": {
-        "keywords": ["bỉm", "sữa bột", "đồ chơi", "em bé", "mẹ bầu", "baby", "tã"],
-        "subcategories": {},
+        "keywords": ["bỉm", "sữa bột", "đồ chơi", "em bé", "mẹ bầu", "baby", "tã", "sữa mẹ", "xe đẩy", "cũi"],
+        "subcategories": {
+            "Bỉm/Tã": ["bỉm", "tã", "diaper"],
+            "Sữa": ["sữa bột", "sữa mẹ", "formula"],
+            "Đồ chơi": ["đồ chơi", "toy", "lego"],
+        },
     },
     "Nội thất": {
         "keywords": ["nội thất", "decor", "bàn", "ghế", "giường", "tủ", "đèn", "rèm"],

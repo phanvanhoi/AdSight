@@ -51,7 +51,10 @@ async def check_ai_credits(user: User, db: AsyncSession):
 
     now = datetime.now(timezone.utc)
     # Reset monthly
-    if user.ai_credits_reset is None or (now - user.ai_credits_reset) > timedelta(days=30):
+    credits_reset = user.ai_credits_reset
+    if credits_reset and credits_reset.tzinfo is None:
+        credits_reset = credits_reset.replace(tzinfo=timezone.utc)
+    if credits_reset is None or (now - credits_reset) > timedelta(days=30):
         user.ai_credits_used = 0
         user.ai_credits_reset = now
 

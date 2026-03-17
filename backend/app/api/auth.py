@@ -1,3 +1,4 @@
+import secrets
 import time
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -28,7 +29,12 @@ router = APIRouter()
 
 class UserSettingsUpdate(PydanticBaseModel):
     email_alerts_enabled: bool | None = None
+    daily_digest_enabled: bool | None = None
+    telegram_enabled: bool | None = None
     full_name: str | None = None
+
+# In-memory store for Telegram connect tokens (short-lived, 10 min expiry)
+_telegram_tokens: dict[str, tuple[str, float]] = {}  # token → (user_id, expire_ts)
 
 # Rate limiting: max attempts per IP per window
 RATE_LIMIT_MAX = 10
@@ -183,6 +189,9 @@ async def get_me(user: User = Depends(get_current_user)):
             },
         },
         "email_alerts_enabled": user.email_alerts_enabled,
+        "daily_digest_enabled": user.daily_digest_enabled,
+        "telegram_connected": bool(user.telegram_chat_id),
+        "telegram_enabled": user.telegram_enabled,
         "stripe_publishable_key": settings.stripe_publishable_key,
     }
 
@@ -196,8 +205,38 @@ async def update_settings(
     """Cập nhật user settings."""
     if data.email_alerts_enabled is not None:
         user.email_alerts_enabled = data.email_alerts_enabled
+    if data.daily_digest_enabled is not None:
+        user.daily_digest_enabled = data.daily_digest_enabled
+    if data.telegram_enabled is not None:
+        user.telegram_enabled = data.telegram_enabled
     if data.full_name is not None:
         user.full_name = data.full_name
+    await db.commit()
+    return {"ok": True}
+
+
+@router.post("/telegram/connect")
+async def telegram_connect(user: User = Depends(get_current_user)):
+    """Generate a one-time token for Telegram bot connection."""
+    from app.config import settings
+
+    token = secrets.token_urlsafe(32)
+    _telegram_tokens[token] = (str(user.id), time.time() + 600)  # 10 min expiry
+    bot_username = settings.telegram_bot_username
+    return {
+        "connect_url": f"https://t.me/{bot_username}?start={token}",
+        "token": token,
+    }
+
+
+@router.post("/telegram/disconnect")
+async def telegram_disconnect(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Disconnect Telegram from account."""
+    user.telegram_chat_id = None
+    user.telegram_enabled = False
     await db.commit()
     return {"ok": True}
 

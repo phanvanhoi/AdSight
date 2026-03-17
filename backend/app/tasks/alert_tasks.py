@@ -102,3 +102,13 @@ async def _check_single_alert(alert: CompetitorAlert, db):
             len(new_ads),
             ad_ids,
         )
+
+        # Send Telegram notification
+        from app.tasks.telegram_tasks import send_telegram_alert
+        send_telegram_alert.delay(
+            str(alert.user_id),
+            alert.name,
+            alert.match_value,
+            len(new_ads),
+            ad_ids,
+        )

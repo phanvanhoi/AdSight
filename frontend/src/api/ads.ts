@@ -3,7 +3,7 @@ import type { SearchParams, SearchResponse, AdDetail, AIAnalysisResponse } from 
 
 export async function searchAds(params: SearchParams): Promise<SearchResponse> {
   const cleanParams = Object.fromEntries(
-    Object.entries(params).filter(([_, v]) => v !== undefined && v !== null && v !== '')
+    Object.entries(params).filter(([_, v]) => v !== undefined && v !== null && v !== '' && v !== false)
   )
   const res = await client.get('/ads/search', { params: cleanParams })
   return res.data
@@ -17,6 +17,11 @@ export async function getAdDetail(id: string): Promise<AdDetail> {
 export async function getAIAnalysis(adId: string): Promise<AIAnalysisResponse> {
   const res = await client.post(`/ads/${adId}/ai-analysis`)
   return res.data
+}
+
+export async function searchSuggest(q: string, limit = 5): Promise<{ text: string; score: number }[]> {
+  const res = await client.get('/search/suggest', { params: { q, limit } })
+  return res.data.suggestions
 }
 
 export async function exportCsv(params: SearchParams) {

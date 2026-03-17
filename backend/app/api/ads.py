@@ -28,7 +28,13 @@ async def search(
     date_from: str | None = Query(default=None, description="Start date YYYY-MM-DD"),
     date_to: str | None = Query(default=None, description="End date YYYY-MM-DD"),
     min_likes: int | None = Query(default=None, ge=0),
-    sort: str = Query(default="relevance", description="Sort: relevance,newest,engagement"),
+    category_l1: str | None = Query(default=None, description="Category L1 filter"),
+    min_spend: float | None = Query(default=None, ge=0, description="Min daily spend"),
+    max_spend: float | None = Query(default=None, ge=0, description="Max daily spend"),
+    min_viral_score: float | None = Query(default=None, ge=0, description="Min viral score"),
+    is_hot: bool | None = Query(default=None, description="Only hot ads"),
+    has_discount: bool | None = Query(default=None, description="Only ads with discount"),
+    sort: str = Query(default="relevance", description="Sort: relevance,newest,engagement,viral"),
     page: int = Query(default=1, ge=1),
     limit: int = Query(default=20, ge=1, le=100),
     user: User | None = Depends(get_optional_user),
@@ -47,6 +53,12 @@ async def search(
         date_from=date_from,
         date_to=date_to,
         min_likes=min_likes,
+        category_l1=category_l1,
+        min_spend=min_spend,
+        max_spend=max_spend,
+        min_viral_score=min_viral_score,
+        is_hot=is_hot,
+        has_discount=has_discount,
         sort=sort,
         page=page,
         limit=limit,
@@ -84,7 +96,8 @@ async def ai_analyze_ad(
 
     # Return cached analysis if exists (< 7 days old)
     if ad.ai_analysis and ad.ai_analyzed_at:
-        age = (datetime.now(timezone.utc) - ad.ai_analyzed_at).days
+        analyzed_at = ad.ai_analyzed_at.replace(tzinfo=timezone.utc) if ad.ai_analyzed_at.tzinfo is None else ad.ai_analyzed_at
+        age = (datetime.now(timezone.utc) - analyzed_at).days
         if age < 7:
             return {"analysis": ad.ai_analysis, "cached": True}
 

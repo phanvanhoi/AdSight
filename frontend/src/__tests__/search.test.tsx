@@ -10,6 +10,7 @@ import type { SearchResponse } from '../types/ad'
 vi.mock('../api/ads', () => ({
   searchAds: vi.fn(),
   exportCsv: vi.fn(),
+  searchSuggest: vi.fn().mockResolvedValue([]),
 }))
 
 import { searchAds } from '../api/ads'
@@ -75,6 +76,7 @@ const mockSearchResponse: SearchResponse = {
     platforms: { meta: 2, tiktok: 1 },
     ad_types: { video: 1, image: 1, carousel: 1 },
     categories: {},
+    categories_l1: {},
   },
 }
 
@@ -99,9 +101,9 @@ describe('Search Page', () => {
     renderWithProviders(<Search />)
 
     expect(
-      screen.getByPlaceholderText('Tim kiem ads... vi du: kem chong nang, thoi trang, giam gia'),
+      screen.getByPlaceholderText('Tìm kiếm ads... ví dụ: kem chống nắng, thời trang, giảm giá'),
     ).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Tim kiem' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Tìm kiếm' })).toBeInTheDocument()
   })
 
   it('submits search and calls API with correct params', async () => {
@@ -111,10 +113,10 @@ describe('Search Page', () => {
     renderWithProviders(<Search />)
 
     const input = screen.getByPlaceholderText(
-      'Tim kiem ads... vi du: kem chong nang, thoi trang, giam gia',
+      'Tìm kiếm ads... ví dụ: kem chống nắng, thời trang, giảm giá',
     )
     await user.type(input, 'kem chong nang')
-    await user.click(screen.getByRole('button', { name: 'Tim kiem' }))
+    await user.click(screen.getByRole('button', { name: 'Tìm kiếm' }))
 
     await waitFor(() => {
       const calls = vi.mocked(searchAds).mock.calls
@@ -128,7 +130,7 @@ describe('Search Page', () => {
     renderWithProviders(<Search />)
 
     await waitFor(() => {
-      expect(screen.getByText('3 ket qua')).toBeInTheDocument()
+      expect(screen.getByText('3 kết quả')).toBeInTheDocument()
     })
 
     expect(screen.getByText('Sale 50% kem chong nang')).toBeInTheDocument()
@@ -142,16 +144,16 @@ describe('Search Page', () => {
       page: 1,
       limit: 20,
       results: [],
-      facets: { platforms: {}, ad_types: {}, categories: {} },
+      facets: { platforms: {}, ad_types: {}, categories: {}, categories_l1: {} },
     })
 
     renderWithProviders(<Search />)
 
     await waitFor(() => {
-      expect(screen.getByText('0 ket qua')).toBeInTheDocument()
+      expect(screen.getByText('0 kết quả')).toBeInTheDocument()
     })
     expect(
-      screen.getByText('Khong tim thay ads nao. Thu tu khoa khac.'),
+      screen.getByText('Không tìm thấy ads nào. Thử từ khóa khác.'),
     ).toBeInTheDocument()
   })
 
@@ -159,9 +161,10 @@ describe('Search Page', () => {
     vi.mocked(searchAds).mockResolvedValue(mockSearchResponse)
     renderWithProviders(<Search />)
 
-    expect(screen.getByRole('button', { name: 'Tat ca' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Tất cả' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Facebook/IG' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'TikTok' })).toBeInTheDocument()
+    // TikTok appears in both SearchBar and FilterPanel
+    expect(screen.getAllByRole('button', { name: 'TikTok' }).length).toBeGreaterThanOrEqual(1)
   })
 
   it('clicking platform filter triggers new search', async () => {
@@ -170,7 +173,7 @@ describe('Search Page', () => {
 
     renderWithProviders(<Search />)
 
-    await user.click(screen.getByRole('button', { name: 'TikTok' }))
+    await user.click(screen.getAllByRole('button', { name: 'TikTok' })[0])
 
     await waitFor(() => {
       const calls = vi.mocked(searchAds).mock.calls
@@ -189,7 +192,7 @@ describe('Search Page', () => {
     renderWithProviders(<Search />)
 
     await waitFor(() => {
-      expect(screen.getByText('100 ket qua')).toBeInTheDocument()
+      expect(screen.getByText('100 kết quả')).toBeInTheDocument()
     })
 
     // 100 / 20 = 5 pages
@@ -203,7 +206,7 @@ describe('Search Page', () => {
     renderWithProviders(<Search />)
 
     await waitFor(() => {
-      expect(screen.getByText('3 ket qua')).toBeInTheDocument()
+      expect(screen.getByText('3 kết quả')).toBeInTheDocument()
     })
 
     // No page buttons should exist

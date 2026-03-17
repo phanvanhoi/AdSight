@@ -19,6 +19,19 @@ export interface AdvertiserGroupsResponse {
   results: AdvertiserGroup[]
 }
 
+export interface AdvertiserAnalytics {
+  platform_breakdown: Record<string, { count: number; total_spend: number }>
+  ads_timeline: { month: string; count: number }[]
+  category_breakdown: Record<string, number>
+  top_ads: { id: string; headline: string | null; likes: number; viral_score: number; platform: string }[]
+  ad_type_breakdown: Record<string, number>
+  avg_engagement_rate: number
+  avg_viral_score: number
+  total_active_ads: number
+  first_ad_date: string | null
+  latest_ad_date: string | null
+}
+
 export interface AdvertiserAd {
   id: string
   platform: string

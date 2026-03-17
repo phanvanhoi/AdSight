@@ -15,34 +15,96 @@ ADS_INDEX_SETTINGS = {
                         "lowercase",
                         "icu_folding",
                         "vietnamese_stop",
+                    ],
+                },
+                "vietnamese_search_analyzer": {
+                    "type": "custom",
+                    "tokenizer": "icu_tokenizer",
+                    "filter": [
+                        "lowercase",
+                        "icu_folding",
+                        "vietnamese_stop",
                         "vietnamese_synonym",
                     ],
-                }
+                },
             },
             "filter": {
                 "vietnamese_stop": {
                     "type": "stop",
                     "stopwords": [
+                        # Common conjunctions/particles
                         "và", "của", "là", "có", "được", "cho", "với", "này",
                         "trong", "không", "những", "một", "các", "để", "từ",
                         "khi", "đã", "như", "cũng", "nhưng", "hay", "hoặc",
+                        # Additional particles/modifiers
+                        "thì", "mà", "nên", "vì", "bởi", "do", "rất", "lắm",
+                        "quá", "đều", "đang", "sẽ", "rồi", "thôi", "nha", "nhé",
+                        # Informal particles
+                        "ạ", "á", "ơi", "nè", "hen", "nhen", "vậy", "thế",
+                        # Common pronouns (often noise in ads)
+                        "bạn", "mình", "tôi", "em", "anh", "chị",
                     ],
                 },
                 "vietnamese_synonym": {
                     "type": "synonym",
                     "synonyms": [
-                        "kem chống nắng, kcn, sunscreen, chống nắng",
-                        "serum, tinh chất, essence",
-                        "son môi, son, lipstick",
-                        "áo thun, áo phông, tshirt, t-shirt",
-                        "giảm giá, sale, khuyến mãi, km, flash sale",
-                        "miễn phí, free, 0 đồng",
-                        "điện thoại, smartphone, dt",
-                        "quần áo, thời trang, fashion",
+                        # ── Mỹ phẩm ──
+                        "kem chống nắng, kcn, sunscreen, chống nắng, chong nang",
+                        "serum, tinh chất, tinh chat, essence, ampoule",
+                        "son môi, son, lipstick, son moi",
+                        "tẩy trang, tay trang, makeup remover, cleansing",
+                        "kem dưỡng, kem duong, moisturizer, dưỡng ẩm, duong am",
+                        "mặt nạ, mat na, mask, sheet mask",
+                        "nước hoa, nuoc hoa, perfume, cologne",
                         "mỹ phẩm, cosmetics, skincare",
-                        "đồ ăn, thức ăn, food, đồ ăn vặt",
-                        "giày dép, giày, dép, shoes",
-                        "túi xách, balo, bag",
+                        # ── Thời trang ──
+                        "áo thun, áo phông, ao thun, ao phong, tshirt, t-shirt",
+                        "quần jean, quan jean, jeans, denim",
+                        "giày dép, giay dep, shoes, sneaker, giày sneaker",
+                        "túi xách, tui xach, balo, bag, handbag",
+                        "đồng hồ, dong ho, watch",
+                        "quần áo, thời trang, fashion",
+                        # ── Công nghệ ──
+                        "điện thoại, dien thoai, smartphone, dt, mobile phone",
+                        "tai nghe, tai nghe bluetooth, earbuds, airpods, headphone",
+                        "sạc dự phòng, sac du phong, powerbank, pin dự phòng",
+                        "laptop, máy tính xách tay, may tinh xach tay, notebook",
+                        # ── Thực phẩm ──
+                        "đồ ăn, thức ăn, do an, thuc an, food, snack, đồ ăn vặt",
+                        "trà sữa, tra sua, boba, milk tea, bubble tea",
+                        "cà phê, ca phe, coffee, cafe",
+                        "thực phẩm chức năng, tpcn, supplement, thuc pham chuc nang",
+                        # ── Nhà cửa ──
+                        "nội thất, noi that, furniture, decor",
+                        "máy lọc không khí, may loc khong khi, air purifier",
+                        "máy hút bụi, may hut bui, vacuum, robot hút bụi",
+                        # ── Giáo dục ──
+                        "khóa học, khoa hoc, course, lớp học, lop hoc",
+                        "tiếng anh, tieng anh, english, ielts, toeic",
+                        "lập trình, lap trinh, coding, programming, developer",
+                        # ── Sức khỏe ──
+                        "giảm cân, giam can, diet, weight loss, eo thon",
+                        "tập gym, tap gym, fitness, workout, thể hình, the hinh",
+                        "vitamin, thuốc bổ, thuoc bo, bổ sung, bo sung",
+                        # ── Marketing/Ads ──
+                        "giảm giá, giam gia, sale, khuyến mãi, khuyen mai, km, flash sale, deal",
+                        "miễn phí, mien phi, free, 0 đồng, 0đ, freebie",
+                        "freeship, miễn phí ship, free ship, free shipping",
+                        "mua 1 tặng 1, buy 1 get 1, bogo, mua 1 được 2",
+                        "voucher, coupon, mã giảm giá, ma giam gia, code giảm giá",
+                        # ── Bất động sản ──
+                        "căn hộ, can ho, apartment, chung cư, chung cu",
+                        "biệt thự, biet thu, villa",
+                        "nhà phố, nha pho, townhouse, nhà mặt tiền",
+                        # ── Xe cộ ──
+                        "xe máy, xe may, motorcycle, xe honda, xe yamaha",
+                        "ô tô, o to, xe hơi, xe hoi, car, sedan, suv",
+                        # ── Viết tắt phổ biến VN ──
+                        "ship cod, thanh toán khi nhận hàng, cod",
+                        "inbox, ib, nhắn tin, dm",
+                        "like, thích, lượt thích",
+                        "share, chia sẻ",
+                        "comment, bình luận, cmt",
                     ],
                 },
             },
@@ -56,6 +118,7 @@ ADS_INDEX_SETTINGS = {
             "advertiser_name": {
                 "type": "text",
                 "analyzer": "vietnamese_analyzer",
+                "search_analyzer": "vietnamese_search_analyzer",
                 "fields": {"keyword": {"type": "keyword"}},
             },
             "advertiser_page_url": {"type": "keyword"},
@@ -63,10 +126,12 @@ ADS_INDEX_SETTINGS = {
             "headline": {
                 "type": "text",
                 "analyzer": "vietnamese_analyzer",
+                "search_analyzer": "vietnamese_search_analyzer",
             },
             "body_text": {
                 "type": "text",
                 "analyzer": "vietnamese_analyzer",
+                "search_analyzer": "vietnamese_search_analyzer",
             },
             "cta_type": {"type": "keyword"},
             "media_urls": {"type": "keyword"},
@@ -99,6 +164,7 @@ ADS_INDEX_SETTINGS = {
             "target_audience_guess": {
                 "type": "text",
                 "analyzer": "vietnamese_analyzer",
+                "search_analyzer": "vietnamese_search_analyzer",
             },
             "estimated_daily_spend": {"type": "float"},
             "estimated_total_spend": {"type": "float"},

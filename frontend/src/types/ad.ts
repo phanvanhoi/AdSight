@@ -20,6 +20,7 @@ export interface Facets {
   platforms: Record<string, number>
   ad_types: Record<string, number>
   categories: Record<string, number>
+  categories_l1: Record<string, number>
 }
 
 export interface SearchResponse {
@@ -69,6 +70,12 @@ export interface SearchParams {
   date_from?: string
   date_to?: string
   min_likes?: number
+  category_l1?: string
+  min_spend?: number
+  max_spend?: number
+  min_viral_score?: number
+  is_hot?: boolean
+  has_discount?: boolean
   sort?: string
   page?: number
   limit?: number
