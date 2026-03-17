@@ -17,7 +17,11 @@ def collect_meta_ads():
     from app.collectors.meta_collector import collect_and_store
 
     logger.info("Starting Meta ads collection...")
-    result = async_to_sync(collect_and_store)()
+    result = async_to_sync(collect_and_store)(
+        ad_active_status="ACTIVE",
+        ad_delivery_date_min="2026-03-01",
+        media_type="VIDEO",
+    )
     logger.info(f"Meta collection done: {result}")
     return result
 

@@ -51,7 +51,7 @@ htmlcov/
 coverage/
 
 # Tasks (internal task tracking, not for git)
-tasks/
+/tasks/
 
 # Misc
 *.bak
