@@ -36,6 +36,10 @@ const mockSearchResponse: SearchResponse = {
       last_seen: '2026-03-15T00:00:00Z',
       is_active: true,
       days_running: 14,
+      category_l1: null,
+      category_l2: null,
+      viral_score: 65,
+      is_hot: true,
     },
     {
       id: 'ad-2',
@@ -53,6 +57,10 @@ const mockSearchResponse: SearchResponse = {
       last_seen: '2026-03-15T00:00:00Z',
       is_active: true,
       days_running: 10,
+      category_l1: null,
+      category_l2: null,
+      viral_score: 30,
+      is_hot: false,
     },
     {
       id: 'ad-3',
@@ -70,6 +78,10 @@ const mockSearchResponse: SearchResponse = {
       last_seen: '2026-03-15T00:00:00Z',
       is_active: true,
       days_running: 5,
+      category_l1: null,
+      category_l2: null,
+      viral_score: 80,
+      is_hot: true,
     },
   ],
   facets: {

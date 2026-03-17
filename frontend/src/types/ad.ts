@@ -14,6 +14,10 @@ export interface AdSummary {
   last_seen: string | null
   is_active: boolean
   days_running: number
+  category_l1: string | null
+  category_l2: string | null
+  viral_score: number | null
+  is_hot: boolean
 }
 
 export interface Facets {
@@ -32,6 +36,8 @@ export interface SearchResponse {
 }
 
 export interface AdDetail extends AdSummary {
+  platform_ad_id: string
+  advertiser_id: string | null
   advertiser_page_url: string | null
   media_urls: string[] | null
   landing_page_url: string | null
@@ -39,13 +45,16 @@ export interface AdDetail extends AdSummary {
   target_age_min: number | null
   target_age_max: number | null
   target_gender: string | null
+  target_interests: string[] | null
   impressions_lower: number | null
   impressions_upper: number | null
   spend_lower: number | null
   spend_upper: number | null
+  language: string | null
+  category: string | null
+  tags: string[] | null
+  sentiment: number | null
   // Enrichment — Categorizer
-  category_l1: string | null
-  category_l2: string | null
   detected_offers: string[] | null
   emotional_triggers: string[] | null
   target_audience_guess: string | null
@@ -54,12 +63,12 @@ export interface AdDetail extends AdSummary {
   estimated_total_spend: number | null
   cpm_estimate: number | null
   engagement_rate: number | null
-  viral_score: number | null
-  is_hot: boolean
   // Creative metadata
   creative_phash: string | null
   dominant_colors: string[] | null
   has_text_overlay: boolean | null
+  // Collection tracking
+  collection_count: number
 }
 
 export interface SearchParams {

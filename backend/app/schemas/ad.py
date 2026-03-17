@@ -34,6 +34,26 @@ class AdDetailResponse(BaseModel):
     category: str | None = None
     tags: list | None = None
     sentiment: float | None = None
+    # Enrichment — Categorizer
+    category_l1: str | None = None
+    category_l2: str | None = None
+    detected_offers: list | None = None
+    emotional_triggers: list | None = None
+    target_audience_guess: str | None = None
+    # Enrichment — Estimator
+    estimated_daily_spend: float | None = None
+    estimated_total_spend: float | None = None
+    cpm_estimate: float | None = None
+    engagement_rate: float | None = None
+    viral_score: float | None = None
+    is_hot: bool = False
+    # Creative metadata
+    creative_phash: str | None = None
+    has_text_overlay: bool | None = None
+    dominant_colors: list | None = None
+    # Collection tracking
+    collection_count: int = 1
+    # Status
     first_seen: datetime | None = None
     last_seen: datetime | None = None
     is_active: bool = True

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Heart, MessageCircle, Share2, Clock, ExternalLink } from 'lucide-react'
+import { Heart, MessageCircle, Share2, Clock, ExternalLink, TrendingUp, Flame } from 'lucide-react'
 import type { AdSummary } from '../../types/ad'
 
 interface Props {
@@ -62,13 +62,21 @@ export default function AdCard({ ad }: Props) {
         >
           {ad.platform === 'meta' ? 'Facebook' : ad.platform === 'tiktok' ? 'TikTok' : ad.platform}
         </span>
-        {/* Active badge */}
-        {ad.is_active && (
-          <span className="absolute top-2.5 right-2.5 flex items-center gap-1 px-2 py-1 rounded-md bg-green-500/90 backdrop-blur-sm text-white text-xs font-medium">
-            <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
-            Active
-          </span>
-        )}
+        {/* Active + Hot badges */}
+        <div className="absolute top-2.5 right-2.5 flex flex-col gap-1">
+          {ad.is_active && (
+            <span className="flex items-center gap-1 px-2 py-1 rounded-md bg-green-500/90 backdrop-blur-sm text-white text-xs font-medium">
+              <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+              Active
+            </span>
+          )}
+          {ad.is_hot && (
+            <span className="flex items-center gap-1 px-2 py-1 rounded-md bg-red-500/90 backdrop-blur-sm text-white text-xs font-semibold">
+              <Flame size={10} />
+              Hot
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Content */}
@@ -118,6 +126,10 @@ export default function AdCard({ ad }: Props) {
                 <Share2 size={12} /> {formatNumber(ad.shares)}
               </span>
             </>
+          ) : ad.viral_score != null && ad.viral_score > 0 ? (
+            <span className="flex items-center gap-1 text-orange-500">
+              <TrendingUp size={12} /> Score {ad.viral_score.toFixed(0)}
+            </span>
           ) : (
             <span className="text-gray-300">Chưa có tương tác</span>
           )}
