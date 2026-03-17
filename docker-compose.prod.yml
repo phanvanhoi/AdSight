@@ -17,7 +17,11 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 1
+    deploy:
+      resources:
+        limits:
+          memory: 256M
     restart: unless-stopped
 
   celery-worker:
@@ -28,7 +32,11 @@ services:
     env_file: .env.production
     depends_on:
       - api
-    command: celery -A app.celery_app worker -l info -c 2
+    command: celery -A app.celery_app worker -l info -c 1
+    deploy:
+      resources:
+        limits:
+          memory: 200M
     restart: unless-stopped
 
   celery-beat:
@@ -40,6 +48,10 @@ services:
     depends_on:
       - api
     command: celery -A app.celery_app beat -l info
+    deploy:
+      resources:
+        limits:
+          memory: 100M
     restart: unless-stopped
 
   frontend:
@@ -80,6 +92,11 @@ services:
       - "5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    command: postgres -c shared_buffers=128MB -c work_mem=4MB -c effective_cache_size=256MB
+    deploy:
+      resources:
+        limits:
+          memory: 300M
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U adsight"]
       interval: 5s
@@ -97,7 +114,7 @@ services:
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
-      - "ES_JAVA_OPTS=-Xms128m -Xmx128m"
+      - "ES_JAVA_OPTS=-Xms200m -Xmx200m"
     volumes:
       - es_data:/usr/share/elasticsearch/data
       - ./elasticsearch/config:/usr/share/elasticsearch/config/custom
@@ -106,6 +123,10 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+    deploy:
+      resources:
+        limits:
+          memory: 350M
     restart: unless-stopped
 
   redis:
@@ -115,6 +136,11 @@ services:
       - "6379"
     volumes:
       - redis_data:/data
+    command: redis-server --maxmemory 50mb --maxmemory-policy allkeys-lru
+    deploy:
+      resources:
+        limits:
+          memory: 64M
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -133,6 +159,10 @@ services:
     volumes:
       - minio_data:/data
     command: server /data --console-address ":9001"
+    deploy:
+      resources:
+        limits:
+          memory: 128M
     restart: unless-stopped
 
 volumes:
