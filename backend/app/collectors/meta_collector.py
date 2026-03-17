@@ -218,10 +218,16 @@ class MetaCollector(BaseCollector):
 
 # Default search terms for VN market
 VN_SEARCH_TERMS = [
-    "mỹ phẩm", "thời trang", "giảm giá", "khuyến mãi",
-    "kem chống nắng", "serum", "điện thoại", "phụ kiện",
-    "giày dép", "túi xách", "đồ ăn", "nhà hàng",
-    "du lịch", "khóa học", "bất động sản", "xe máy",
+    # AI & Chatbot
+    "AI tool", "chatbot", "artificial intelligence", "GPT", "AI assistant",
+    # SaaS & Software
+    "SaaS", "software", "phần mềm", "ứng dụng", "app",
+    # Business tools
+    "CRM", "ERP", "marketing tool", "automation", "workflow",
+    # Productivity & Cloud
+    "productivity", "project management", "cloud", "no code", "low code",
+    # Specific niches
+    "email marketing", "landing page", "analytics", "SEO tool", "ads manager",
 ]
 
 
