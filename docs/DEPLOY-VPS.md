@@ -125,12 +125,26 @@ docker compose -f docker-compose.prod.yml logs -f
 
 Thứ tự khởi động tự động: postgres/redis/elasticsearch (healthcheck) → api → celery-worker/celery-beat → frontend → nginx
 
-## 5. Khởi tạo Database
+## 5. Khởi tạo Database & Elasticsearch
 
 ```bash
 # Chạy migration (Alembic)
 docker compose -f docker-compose.prod.yml exec api alembic upgrade head
 ```
+
+> **Lưu ý:** ES index `ads` sẽ **tự động tạo** khi API khởi động (nếu chưa tồn tại).
+> Không cần chạy `init-es` thủ công nữa. Nếu cần recreate index (thay đổi mapping/synonym):
+>
+> ```bash
+> # Xóa index cũ → restart API → tự tạo lại
+> docker compose -f docker-compose.prod.yml exec api python -c "
+> from elasticsearch import Elasticsearch
+> es = Elasticsearch('http://elasticsearch:9200')
+> es.indices.delete(index='ads', ignore=[404])
+> print('Deleted')
+> "
+> docker compose -f docker-compose.prod.yml restart api
+> ```
 
 ## 6. Kiểm tra services
 
@@ -270,6 +284,28 @@ docker compose -f docker-compose.prod.yml logs --tail=50 api
 
 Lưu ý: Frontend container listen port **80** (Nginx serve static), không phải 3000.
 
+### Elasticsearch synonym lỗi khi tạo index
+
+Lỗi: `failed to build synonyms from ['vietnamese_synonym' analyzer settings]`
+
+Nguyên nhân: Synonym filter phải chạy **trước** `icu_folding` trong analyzer chain. Nếu chạy sau, text đã bị fold (mất dấu) nên synonym tiếng Việt không match.
+
+Thứ tự đúng trong `vietnamese_search_analyzer`:
+```
+lowercase → vietnamese_synonym → icu_folding → vietnamese_stop
+```
+
+Fix: cập nhật code mới nhất (`git pull`) rồi recreate index:
+```bash
+docker compose -f docker-compose.prod.yml exec api python -c "
+from elasticsearch import Elasticsearch
+es = Elasticsearch('http://elasticsearch:9200')
+es.indices.delete(index='ads', ignore=[404])
+print('Deleted')
+"
+docker compose -f docker-compose.prod.yml restart api
+```
+
 ### bcrypt lỗi với Python 3.12
 
 Đảm bảo `backend/requirements.txt` có pin version:
@@ -305,6 +341,50 @@ Nếu chỉ cần restart một service:
 ```bash
 docker compose -f docker-compose.prod.yml restart api
 docker compose -f docker-compose.prod.yml restart celery-worker
+```
+
+---
+
+## Celery Scheduled Tasks
+
+### Data Collection (tự động)
+
+| Task | Schedule | Mô tả |
+|------|----------|-------|
+| collect_meta_ads | Mỗi 2h | Thu thập ads từ Meta Ad Library |
+| collect_tiktok_ads | Mỗi 4h | Thu thập ads từ TikTok Creative Center |
+| collect_google_ads | Mỗi 6h | Thu thập ads từ Google Ads Transparency |
+| enrich_unenriched_ads | Daily 3:00 UTC | Auto-categorize ads chưa có category |
+| match_advertisers | Daily 4:00 UTC | Gom nhóm advertiser cross-platform |
+| check_competitor_ads | Mỗi 2h | Kiểm tra alert competitor mới |
+| send_daily_digest | Daily 0:00 UTC | Gửi email daily digest cho user |
+
+### Data Lifecycle (tự động dọn dẹp)
+
+| Task | Schedule | Mô tả |
+|------|----------|-------|
+| mark_expired_ads | Daily 5:00 UTC | `is_active=False` nếu `last_seen` > 7 ngày |
+| update_hot_ads | Mỗi 2h | Tính `viral_score`, set `is_hot` |
+| dedupe_ads | Daily 5:30 UTC | Merge ads trùng `creative_phash` cùng platform |
+| cleanup_incomplete | Daily 5:45 UTC | Deactivate ads thiếu headline + body + media |
+| archive_stale_ads | CN 6:00 UTC | Xóa khỏi ES ads inactive > 30 ngày (giữ DB) |
+| purge_old_ads | CN 6:30 UTC | Xóa vĩnh viễn DB ads inactive > 30 ngày (trừ ads đã saved vào board) |
+
+### Kiểm tra Celery
+
+```bash
+# Xem logs worker
+docker compose -f docker-compose.prod.yml logs --tail=50 celery-worker
+
+# Xem logs beat (scheduler)
+docker compose -f docker-compose.prod.yml logs --tail=50 celery-beat
+
+# Chạy task thủ công
+docker compose -f docker-compose.prod.yml exec api python -c "
+from app.celery_app import celery
+celery.send_task('lifecycle.mark_expired_ads')
+print('Task sent')
+"
 ```
 
 ---
