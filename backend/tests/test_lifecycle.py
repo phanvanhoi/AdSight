@@ -317,3 +317,165 @@ class TestPurgeOldAds:
 
         result = await purge_old_ads(db, purge_days=30)
         assert result["purged"] == 0
+
+
+# ---------------------------------------------------------------------------
+# 7. Hot ads with Meta-style data (no engagement, use longevity/collection)
+# ---------------------------------------------------------------------------
+@pytest.mark.asyncio
+class TestUpdateHotAdsMetaSignals:
+    async def test_meta_ad_longevity_boosts_score(self, db: AsyncSession):
+        """Ad running 14 days with 0 engagement should still get a score."""
+        from app.services.lifecycle import update_hot_ads
+
+        _make_ad(db, platform_ad_id="meta_long_running",
+                 likes=0, comments=0, shares=0,
+                 first_seen=datetime.now(timezone.utc) - timedelta(days=14),
+                 last_seen=datetime.now(timezone.utc),
+                 collection_count=5)
+        await db.commit()
+
+        await update_hot_ads(db, hot_threshold=50.0)
+
+        ad = (await db.execute(
+            select(Ad).where(Ad.platform_ad_id == "meta_long_running")
+        )).scalar_one()
+        # 14 days * 2 = 20pts longevity + 4 re-collections * 3 = 12pts = 32+
+        assert ad.viral_score is not None
+        assert ad.viral_score > 0
+
+    async def test_meta_ad_with_impressions_spend(self, db: AsyncSession):
+        """Ad with impressions/spend data should score higher."""
+        from app.services.lifecycle import update_hot_ads
+
+        _make_ad(db, platform_ad_id="meta_with_spend",
+                 likes=0, comments=0, shares=0,
+                 impressions_lower=1000, impressions_upper=2000,
+                 spend_lower=30000, spend_upper=35000,
+                 first_seen=datetime.now(timezone.utc) - timedelta(days=2),
+                 last_seen=datetime.now(timezone.utc),
+                 collection_count=1)
+        _make_ad(db, platform_ad_id="meta_no_spend",
+                 likes=0, comments=0, shares=0,
+                 first_seen=datetime.now(timezone.utc) - timedelta(days=2),
+                 last_seen=datetime.now(timezone.utc),
+                 collection_count=1)
+        await db.commit()
+
+        await update_hot_ads(db)
+
+        with_spend = (await db.execute(
+            select(Ad).where(Ad.platform_ad_id == "meta_with_spend")
+        )).scalar_one()
+        no_spend = (await db.execute(
+            select(Ad).where(Ad.platform_ad_id == "meta_no_spend")
+        )).scalar_one()
+        assert with_spend.viral_score > no_spend.viral_score
+
+    async def test_advertiser_saturation_boosts_score(self, db: AsyncSession):
+        """Advertiser with multiple ad variants should score higher."""
+        from app.services.lifecycle import update_hot_ads
+
+        # Advertiser with 3 variants (like Arctic Grey in real data)
+        for i in range(3):
+            _make_ad(db, platform_ad_id=f"arctic_{i}",
+                     advertiser_id="adv_arctic",
+                     likes=0, comments=0, shares=0,
+                     first_seen=datetime.now(timezone.utc) - timedelta(days=5),
+                     last_seen=datetime.now(timezone.utc))
+        # Solo advertiser
+        _make_ad(db, platform_ad_id="solo_1",
+                 advertiser_id="adv_solo",
+                 likes=0, comments=0, shares=0,
+                 first_seen=datetime.now(timezone.utc) - timedelta(days=5),
+                 last_seen=datetime.now(timezone.utc))
+        await db.commit()
+
+        await update_hot_ads(db)
+
+        arctic = (await db.execute(
+            select(Ad).where(Ad.platform_ad_id == "arctic_0")
+        )).scalar_one()
+        solo = (await db.execute(
+            select(Ad).where(Ad.platform_ad_id == "solo_1")
+        )).scalar_one()
+        assert arctic.viral_score > solo.viral_score
+
+
+# ---------------------------------------------------------------------------
+# 8. Content-hash based deduplication
+# ---------------------------------------------------------------------------
+@pytest.mark.asyncio
+class TestDedupeByContentHash:
+    async def test_dedupes_same_body_text(self, db: AsyncSession):
+        """Ads with same content_hash should be deduped (like Arctic Grey)."""
+        from app.services.lifecycle import dedupe_ads
+
+        chash = "abcdef1234567890"
+        _make_ad(db, platform_ad_id="arctic_1", content_hash=chash,
+                 headline="Free Shopify Test Drive",
+                 body_text="Experience a fully customized Shopify prototype",
+                 first_seen=datetime.now(timezone.utc) - timedelta(days=13),
+                 last_seen=datetime.now(timezone.utc) - timedelta(days=1))
+        _make_ad(db, platform_ad_id="arctic_2", content_hash=chash,
+                 headline="Free Shopify Test Drive",
+                 body_text="Experience a fully customized Shopify prototype",
+                 first_seen=datetime.now(timezone.utc) - timedelta(days=13),
+                 last_seen=datetime.now(timezone.utc))
+        _make_ad(db, platform_ad_id="arctic_3", content_hash=chash,
+                 headline="Free Shopify Test Drive",
+                 body_text="Experience a fully customized Shopify prototype",
+                 first_seen=datetime.now(timezone.utc) - timedelta(days=13),
+                 last_seen=datetime.now(timezone.utc) - timedelta(days=2))
+        await db.commit()
+
+        result = await dedupe_ads(db)
+        assert result["merged"] == 2  # 3 ads → keep 1, merge 2
+
+        # Newest by last_seen should be kept
+        keeper = (await db.execute(
+            select(Ad).where(Ad.platform_ad_id == "arctic_2")
+        )).scalar_one()
+        assert keeper.is_active is True
+
+    async def test_different_content_not_deduped(self, db: AsyncSession):
+        from app.services.lifecycle import dedupe_ads
+
+        _make_ad(db, platform_ad_id="diff_1", content_hash="hash_aaa")
+        _make_ad(db, platform_ad_id="diff_2", content_hash="hash_bbb")
+        await db.commit()
+
+        result = await dedupe_ads(db)
+        assert result["merged"] == 0
+
+
+# ---------------------------------------------------------------------------
+# 9. Content hash computation
+# ---------------------------------------------------------------------------
+class TestContentHash:
+    def test_computes_hash_from_text(self):
+        from app.collectors.base import _compute_content_hash
+
+        h1 = _compute_content_hash({"headline": "Test", "body_text": "Body"})
+        h2 = _compute_content_hash({"headline": "Test", "body_text": "Body"})
+        assert h1 is not None
+        assert h1 == h2
+
+    def test_whitespace_normalized(self):
+        from app.collectors.base import _compute_content_hash
+
+        h1 = _compute_content_hash({"headline": "Test  Ad", "body_text": "some  body"})
+        h2 = _compute_content_hash({"headline": "Test Ad", "body_text": "some body"})
+        assert h1 == h2
+
+    def test_none_content_returns_none(self):
+        from app.collectors.base import _compute_content_hash
+
+        assert _compute_content_hash({"headline": None, "body_text": None}) is None
+
+    def test_different_text_different_hash(self):
+        from app.collectors.base import _compute_content_hash
+
+        h1 = _compute_content_hash({"headline": "Ad A", "body_text": "Body A"})
+        h2 = _compute_content_hash({"headline": "Ad B", "body_text": "Body B"})
+        assert h1 != h2

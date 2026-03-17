@@ -29,38 +29,87 @@ async def mark_expired_ads(db: AsyncSession, expire_days: int = 7) -> dict:
 
 
 async def update_hot_ads(db: AsyncSession, hot_threshold: float = 50.0) -> dict:
-    """Recalculate viral_score for active ads and set is_hot flag."""
-    result = await db.execute(
-        select(Ad).where(Ad.is_active.is_(True), Ad.likes.isnot(None))
+    """Recalculate viral_score for active ads using all available signals.
+
+    Signals used (adapts to what each platform provides):
+    1. Engagement (TikTok): likes + comments*2 + shares*3
+    2. Ad longevity: days running (first_seen → now) — longer = more successful
+    3. Collection count: how many times ad reappeared in API = still being served
+    4. Impressions/Spend (Meta, when available)
+    5. Advertiser saturation: number of active ad variants from same advertiser
+    """
+    # Pre-compute advertiser saturation: count active ads per advertiser
+    sat_query = (
+        select(Ad.advertiser_id, func.count(Ad.id).label("ad_count"))
+        .where(Ad.is_active.is_(True), Ad.advertiser_id.isnot(None))
+        .group_by(Ad.advertiser_id)
     )
+    sat_result = await db.execute(sat_query)
+    advertiser_ad_counts = {row[0]: row[1] for row in sat_result.all()}
+
+    result = await db.execute(select(Ad).where(Ad.is_active.is_(True)))
     ads = result.scalars().all()
 
     updated = 0
     for ad in ads:
+        # ── Signal 1: Engagement (primarily TikTok) ──
         likes = ad.likes or 0
         comments = ad.comments or 0
         shares = ad.shares or 0
         total_engagement = likes + comments * 2 + shares * 3
+        engagement_score = min(40.0, total_engagement / 100.0)  # max 40 points
 
-        # Recency boost: decay 5% per day
-        recency = 1.0
+        # ── Signal 2: Ad longevity (days running) ──
+        longevity_score = 0.0
+        if ad.first_seen:
+            first = ad.first_seen
+            if first.tzinfo is None:
+                first = first.replace(tzinfo=timezone.utc)
+            days_running = max(1, (datetime.now(timezone.utc) - first).days)
+            # 1 day=2pts, 7 days=14pts, 14 days=20pts (cap)
+            longevity_score = min(20.0, days_running * 2.0)
+
+        # ── Signal 3: Collection frequency ──
+        collection_count = ad.collection_count or 1
+        # Each re-collection = still being served = 3pts, max 15pts
+        collection_score = min(15.0, (collection_count - 1) * 3.0)
+
+        # ── Signal 4: Impressions & Spend (Meta, when available) ──
+        spend_score = 0.0
+        impressions = ad.impressions_upper or ad.impressions_lower
+        spend = ad.spend_upper or ad.spend_lower
+        if impressions and impressions > 0:
+            # 1K imp = 2pts, 10K = 10pts, max 15pts
+            spend_score = min(15.0, (impressions / 1000.0) * 2.0)
+        elif spend and spend > 0:
+            # Use spend as fallback: 10K VND = 1pt, max 15pts
+            spend_score = min(15.0, spend / 10000.0)
+
+        # ── Signal 5: Advertiser saturation ──
+        ad_variants = advertiser_ad_counts.get(ad.advertiser_id, 1)
+        # Multiple variants = bigger budget: 2 ads=3pts, 5+=10pts max
+        saturation_score = min(10.0, (ad_variants - 1) * 3.0)
+
+        # ── Final score ──
+        score = min(100.0, engagement_score + longevity_score + collection_score
+                    + spend_score + saturation_score)
+
+        # Recency penalty: decay for ads not seen recently
         if ad.last_seen:
             last_seen = ad.last_seen
             if last_seen.tzinfo is None:
                 last_seen = last_seen.replace(tzinfo=timezone.utc)
-            days_ago = (datetime.now(timezone.utc) - last_seen).days
-            recency = max(0.2, 1.0 - (days_ago * 0.05))
-
-        score = min(100.0, (total_engagement / 100.0) * recency)
+            days_since_seen = (datetime.now(timezone.utc) - last_seen).days
+            if days_since_seen > 1:
+                score *= max(0.3, 1.0 - (days_since_seen * 0.1))
 
         engagement_rate = None
-        impressions = ad.impressions_upper or ad.impressions_lower
-        if impressions and impressions > 0:
+        if impressions and impressions > 0 and total_engagement > 0:
             engagement_rate = (total_engagement / impressions) * 100
 
         new_is_hot = score >= hot_threshold
 
-        if ad.viral_score != score or ad.is_hot != new_is_hot:
+        if ad.viral_score != round(score, 2) or ad.is_hot != new_is_hot:
             ad.viral_score = round(score, 2)
             ad.is_hot = new_is_hot
             if engagement_rate is not None:
@@ -103,37 +152,76 @@ async def archive_stale_ads(db: AsyncSession, es, index_name: str,
 
 
 async def dedupe_ads(db: AsyncSession) -> dict:
-    """Merge ads with the same creative_phash on the same platform."""
-    dupe_query = (
-        select(Ad.platform, Ad.creative_phash, func.count(Ad.id).label("cnt"))
+    """Merge duplicate ads on the same platform.
+
+    Deduplication keys (checked in order):
+    1. creative_phash — perceptual image hash (when media is downloaded)
+    2. content_hash — SHA-256 of headline+body_text (works with Meta/Google data)
+
+    Keeps the newest ad (by last_seen), merges max engagement metrics.
+    """
+    merged = 0
+
+    # Dedupe by creative_phash
+    phash_dupes = (await db.execute(
+        select(Ad.platform, Ad.creative_phash, func.count(Ad.id))
         .where(Ad.creative_phash.isnot(None), Ad.creative_phash != "")
         .group_by(Ad.platform, Ad.creative_phash)
         .having(func.count(Ad.id) > 1)
-    )
-    dupes = (await db.execute(dupe_query)).all()
+    )).all()
 
-    merged = 0
-    for platform, phash, _count in dupes:
-        result = await db.execute(
-            select(Ad)
-            .where(Ad.platform == platform, Ad.creative_phash == phash)
-            .order_by(Ad.last_seen.desc().nullslast())
+    for platform, phash, _ in phash_dupes:
+        merged += await _merge_group(db, Ad.platform == platform, Ad.creative_phash == phash)
+
+    # Dedupe by content_hash (catches Meta/Google text duplicates)
+    content_dupes = (await db.execute(
+        select(Ad.platform, Ad.content_hash, func.count(Ad.id))
+        .where(
+            Ad.content_hash.isnot(None), Ad.content_hash != "",
+            Ad.is_active.is_(True),
         )
-        ads = result.scalars().all()
-        keeper = ads[0]
+        .group_by(Ad.platform, Ad.content_hash)
+        .having(func.count(Ad.id) > 1)
+    )).all()
 
-        for dupe in ads[1:]:
-            keeper.likes = max(keeper.likes or 0, dupe.likes or 0)
-            keeper.comments = max(keeper.comments or 0, dupe.comments or 0)
-            keeper.shares = max(keeper.shares or 0, dupe.shares or 0)
-            if dupe.first_seen and (not keeper.first_seen or dupe.first_seen < keeper.first_seen):
-                keeper.first_seen = dupe.first_seen
-            dupe.is_active = False
-            merged += 1
+    for platform, chash, _ in content_dupes:
+        merged += await _merge_group(db, Ad.platform == platform, Ad.content_hash == chash)
 
     await db.commit()
     logger.info(f"[lifecycle] Deduped {merged} duplicate ads")
     return {"merged": merged}
+
+
+async def _merge_group(db: AsyncSession, *filters) -> int:
+    """Merge a group of duplicate ads. Returns number of ads deactivated."""
+    result = await db.execute(
+        select(Ad)
+        .where(*filters, Ad.is_active.is_(True))
+        .order_by(Ad.last_seen.desc().nullslast())
+    )
+    ads = result.scalars().all()
+    if len(ads) <= 1:
+        return 0
+
+    keeper = ads[0]
+    merged = 0
+    for dupe in ads[1:]:
+        keeper.likes = max(keeper.likes or 0, dupe.likes or 0)
+        keeper.comments = max(keeper.comments or 0, dupe.comments or 0)
+        keeper.shares = max(keeper.shares or 0, dupe.shares or 0)
+        keeper.collection_count = (keeper.collection_count or 1) + (dupe.collection_count or 1)
+        if dupe.first_seen and (not keeper.first_seen or dupe.first_seen < keeper.first_seen):
+            keeper.first_seen = dupe.first_seen
+        if dupe.impressions_upper and (not keeper.impressions_upper or dupe.impressions_upper > keeper.impressions_upper):
+            keeper.impressions_upper = dupe.impressions_upper
+            keeper.impressions_lower = dupe.impressions_lower
+        if dupe.spend_upper and (not keeper.spend_upper or dupe.spend_upper > keeper.spend_upper):
+            keeper.spend_upper = dupe.spend_upper
+            keeper.spend_lower = dupe.spend_lower
+        dupe.is_active = False
+        merged += 1
+
+    return merged
 
 
 async def cleanup_incomplete(db: AsyncSession) -> dict:

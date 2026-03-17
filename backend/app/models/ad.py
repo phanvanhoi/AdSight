@@ -84,6 +84,10 @@ class Ad(BaseModel):
     ai_analysis: Mapped[dict | None] = mapped_column(JSONB, default=None)
     ai_analyzed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
+    # Collection tracking
+    collection_count: Mapped[int] = mapped_column(Integer, default=1)
+    content_hash: Mapped[str | None] = mapped_column(String(64), index=True)
+
     # Status
     first_seen: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     last_seen: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

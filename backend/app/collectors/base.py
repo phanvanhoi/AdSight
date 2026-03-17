@@ -1,5 +1,6 @@
 import abc
 import asyncio
+import hashlib
 import logging
 import uuid
 from datetime import datetime, timezone
@@ -78,10 +79,24 @@ def _to_datetime(value) -> datetime | None:
         return None
 
 
+def _compute_content_hash(ad_data: dict) -> str | None:
+    """Compute SHA-256 hash of ad text content for deduplication."""
+    parts = []
+    for field in ("headline", "body_text"):
+        val = ad_data.get(field)
+        if val:
+            # Normalize whitespace for consistent hashing
+            parts.append(" ".join(val.split()))
+    if not parts:
+        return None
+    raw = "|".join(parts).lower()
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]
+
+
 async def upsert_ads(db: AsyncSession, ads: list[dict]) -> dict:
     """
     Bulk upsert ads into PostgreSQL.
-    - If platform_ad_id already exists -> update metrics
+    - If platform_ad_id already exists -> update metrics (only if new value > 0)
     - If not -> insert new record
     Returns {"new": N, "updated": M}
     """
@@ -93,6 +108,9 @@ async def upsert_ads(db: AsyncSession, ads: list[dict]) -> dict:
         platform = ad_data["platform"]
         platform_ad_id = ad_data["platform_ad_id"]
 
+        # Compute content hash for text-based deduplication
+        content_hash = _compute_content_hash(ad_data)
+
         result = await db.execute(
             select(Ad).where(
                 Ad.platform == platform,
@@ -103,10 +121,19 @@ async def upsert_ads(db: AsyncSession, ads: list[dict]) -> dict:
 
         if existing:
             existing.last_seen = datetime.now(timezone.utc)
-            existing.likes = ad_data.get("likes", existing.likes)
-            existing.comments = ad_data.get("comments", existing.comments)
-            existing.shares = ad_data.get("shares", existing.shares)
+            existing.collection_count = (existing.collection_count or 1) + 1
             existing.is_active = ad_data.get("is_active", existing.is_active)
+            if content_hash:
+                existing.content_hash = content_hash
+
+            # Only update engagement if new value > existing (don't overwrite with 0)
+            for field in ("likes", "comments", "shares"):
+                new_val = ad_data.get(field, 0) or 0
+                old_val = getattr(existing, field) or 0
+                if new_val > old_val:
+                    setattr(existing, field, new_val)
+
+            # Only update impressions/spend if new value is provided (not None)
             if ad_data.get("impressions_lower") is not None:
                 existing.impressions_lower = ad_data["impressions_lower"]
             if ad_data.get("impressions_upper") is not None:
@@ -155,6 +182,8 @@ async def upsert_ads(db: AsyncSession, ads: list[dict]) -> dict:
                 first_seen=_to_datetime(ad_data.get("first_seen")),
                 last_seen=_to_datetime(ad_data.get("last_seen")),
                 is_active=ad_data.get("is_active", True),
+                collection_count=1,
+                content_hash=content_hash,
             )
             db.add(ad)
             new_count += 1
