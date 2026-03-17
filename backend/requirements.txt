@@ -21,6 +21,7 @@ celery[redis]==5.4.0
 # Auth
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
+bcrypt==4.0.1
 
 # HTTP client
 httpx==0.28.1
@@ -41,6 +42,12 @@ asgiref==3.8.1
 # Image analysis
 Pillow==11.1.0
 imagehash==4.3.1
+
+# Stripe
+stripe>=8.0.0
+
+# Claude AI
+anthropic>=0.40.0
 
 # HTML parsing
 beautifulsoup4==4.12.3
