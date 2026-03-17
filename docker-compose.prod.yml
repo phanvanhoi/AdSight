@@ -17,7 +17,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2
     restart: unless-stopped
 
   celery-worker:
@@ -28,7 +28,7 @@ services:
     env_file: .env.production
     depends_on:
       - api
-    command: celery -A app.celery_app worker -l info -c 4
+    command: celery -A app.celery_app worker -l info -c 2
     restart: unless-stopped
 
   celery-beat:
@@ -97,7 +97,7 @@ services:
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "ES_JAVA_OPTS=-Xms128m -Xmx128m"
     volumes:
       - es_data:/usr/share/elasticsearch/data
       - ./elasticsearch/config:/usr/share/elasticsearch/config/custom
