@@ -48,6 +48,39 @@ class Settings(BaseSettings):
     proxy_url: str = ""
     proxy_enabled: bool = False
 
+    # Stripe (international)
+    stripe_secret_key: str = ""
+    stripe_publishable_key: str = ""
+    stripe_webhook_secret: str = ""
+    stripe_price_pro_monthly: str = ""
+    stripe_price_agency_monthly: str = ""
+
+    # VNPay
+    vnpay_tmn_code: str = ""
+    vnpay_hash_secret: str = ""
+    vnpay_url: str = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
+    vnpay_return_url: str = ""
+
+    # MoMo
+    momo_partner_code: str = ""
+    momo_access_key: str = ""
+    momo_secret_key: str = ""
+    momo_endpoint: str = "https://test-payment.momo.vn/v2/gateway/api"
+    momo_return_url: str = ""
+    momo_notify_url: str = ""
+
+    # Claude AI
+    claude_api_key: str = ""
+    claude_model: str = "claude-sonnet-4-6"
+
+    # Email (SMTP)
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_password: str = ""
+    smtp_from_email: str = "noreply@adsight.vn"
+    smtp_from_name: str = "AdSight"
+
     # CORS
     cors_origins: list[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
     cors_origins_str: str = ""  # Comma-separated, overrides cors_origins if set

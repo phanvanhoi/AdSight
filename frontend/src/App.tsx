@@ -10,6 +10,10 @@ import AdvertisersPage from './pages/AdvertisersPage'
 import AdvertiserDetailPage from './pages/AdvertiserDetailPage'
 import Login from './pages/Login'
 import Register from './pages/Register'
+import Pricing from './pages/Pricing'
+import BillingSuccess from './pages/BillingSuccess'
+import Alerts from './pages/Alerts'
+import Settings from './pages/Settings'
 
 export default function App() {
   return (
@@ -25,6 +29,12 @@ export default function App() {
         <Route path="/tiktok-shop" element={<TikTokShopPage />} />
         <Route path="/advertisers" element={<AdvertisersPage />} />
         <Route path="/advertisers/:id" element={<AdvertiserDetailPage />} />
+        <Route path="/alerts" element={<Alerts />} />
+        <Route path="/settings" element={<Settings />} />
+        <Route path="/pricing" element={<Pricing />} />
+        <Route path="/billing/success" element={<BillingSuccess />} />
+        <Route path="/billing/vnpay-return" element={<BillingSuccess />} />
+        <Route path="/billing/momo-return" element={<BillingSuccess />} />
       </Route>
     </Routes>
   )

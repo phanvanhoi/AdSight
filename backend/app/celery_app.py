@@ -54,6 +54,14 @@ celery.conf.beat_schedule = {
         "task": "app.tasks.collection_tasks.match_advertisers",
         "schedule": crontab(minute=0, hour=4),  # 4 AM daily
     },
+    "check-expired-subscriptions": {
+        "task": "check_expired_subscriptions",
+        "schedule": crontab(hour=0, minute=30),  # 00:30 UTC daily
+    },
+    "check-competitor-ads-every-2h": {
+        "task": "check_competitor_ads",
+        "schedule": crontab(minute=10, hour="*/2"),
+    },
 }
 
 # Auto-discover tasks

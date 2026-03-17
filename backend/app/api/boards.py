@@ -5,6 +5,7 @@ from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.core.tier_limits import get_tier_limits
 from app.dependencies import get_current_user
 from app.models.board import Board
 from app.models.board_ad import BoardAd
@@ -32,15 +33,16 @@ async def create_board(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    # Free tier: max 3 boards
-    if user.tier == "free":
+    # Enforce board limit based on tier
+    limits = get_tier_limits(user.tier)
+    if limits.max_boards != -1:
         count = await db.scalar(
             select(func.count()).select_from(Board).where(Board.user_id == user.id)
         )
-        if count >= 3:
+        if count >= limits.max_boards:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Free tier allows max 3 boards. Upgrade to Pro for unlimited.",
+                detail=f"Gói {user.tier} chỉ được tạo {limits.max_boards} boards. Nâng cấp để tạo thêm.",
             )
     board = Board(name=data.name, description=data.description, user_id=user.id)
     db.add(board)
@@ -91,18 +93,19 @@ async def add_ad_to_board(
     if result.scalar_one_or_none():
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Ad already in board")
 
-    # Free tier: max 50 saved ads total
-    if user.tier == "free":
+    # Enforce saved ads limit based on tier
+    limits = get_tier_limits(user.tier)
+    if limits.max_saved_ads != -1:
         total = await db.scalar(
             select(func.count())
             .select_from(BoardAd)
             .join(Board)
             .where(Board.user_id == user.id)
         )
-        if total >= 50:
+        if total >= limits.max_saved_ads:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Free tier allows max 50 saved ads. Upgrade to Pro.",
+                detail=f"Gói {user.tier} chỉ lưu được {limits.max_saved_ads} ads. Nâng cấp để lưu thêm.",
             )
 
     board_ad = BoardAd(board_id=board_id, ad_id=ad_id)

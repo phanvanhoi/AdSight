@@ -1,5 +1,5 @@
 import client from './client'
-import type { SearchParams, SearchResponse, AdDetail } from '../types/ad'
+import type { SearchParams, SearchResponse, AdDetail, AIAnalysisResponse } from '../types/ad'
 
 export async function searchAds(params: SearchParams): Promise<SearchResponse> {
   const cleanParams = Object.fromEntries(
@@ -11,6 +11,11 @@ export async function searchAds(params: SearchParams): Promise<SearchResponse> {
 
 export async function getAdDetail(id: string): Promise<AdDetail> {
   const res = await client.get(`/ads/${id}`)
+  return res.data
+}
+
+export async function getAIAnalysis(adId: string): Promise<AIAnalysisResponse> {
+  const res = await client.post(`/ads/${adId}/ai-analysis`)
   return res.data
 }
 

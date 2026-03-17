@@ -48,7 +48,7 @@ class TestCreateBoard:
             "name": "Board 4",
         }, headers=headers)
         assert resp.status_code == 403
-        assert "max 3 boards" in resp.json()["detail"]
+        assert "3 boards" in resp.json()["detail"]
 
 
 @pytest.mark.asyncio
@@ -144,7 +144,7 @@ class TestBoardAds:
             f"/api/boards/{board_id}/ads/{ad51.id}", headers=headers
         )
         assert resp.status_code == 403
-        assert "max 50" in resp.json()["detail"]
+        assert "50 ads" in resp.json()["detail"]
 
 
 @pytest.mark.asyncio

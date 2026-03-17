@@ -73,3 +73,55 @@ export interface SearchParams {
   page?: number
   limit?: number
 }
+
+// AI Analysis types
+
+export interface AIHookAnalysis {
+  hook_type: string
+  hook_text: string
+  effectiveness: number
+  explanation: string
+}
+
+export interface AITargetAudience {
+  primary: string
+  demographics: string
+  psychographics: string
+}
+
+export interface AICTAAnalysis {
+  cta_text: string
+  cta_strength: number
+  suggestion: string
+}
+
+export interface AICopyAnalysis {
+  tone: string
+  readability: number
+  key_benefits: string[]
+  power_words: string[]
+}
+
+export interface AIPerformancePrediction {
+  score: number
+  reasoning: string
+}
+
+export interface AIAnalysis {
+  summary: string
+  hook_analysis: AIHookAnalysis
+  emotional_triggers: string[]
+  target_audience: AITargetAudience
+  cta_analysis: AICTAAnalysis
+  copy_analysis: AICopyAnalysis
+  strengths: string[]
+  weaknesses: string[]
+  suggestions: string[]
+  performance_prediction: AIPerformancePrediction
+  similar_angle_ideas: string[]
+}
+
+export interface AIAnalysisResponse {
+  analysis: AIAnalysis
+  cached: boolean
+}

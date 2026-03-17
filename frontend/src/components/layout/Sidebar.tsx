@@ -1,10 +1,12 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
   Search, LayoutDashboard, Bookmark, ShoppingBag,
-  Users, ChevronLeft, ChevronRight, LogOut
+  Users, ChevronLeft, ChevronRight, LogOut, CreditCard, Radar, Settings
 } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '../../stores/authStore'
 import { useUIStore } from '../../stores/uiStore'
+import { getMe } from '../../api/billing'
 
 const NAV_ITEMS = [
   { path: '/search', icon: Search, label: 'Tìm kiếm' },
@@ -12,6 +14,9 @@ const NAV_ITEMS = [
   { path: '/boards', icon: Bookmark, label: 'Bảng lưu' },
   { path: '/tiktok-shop', icon: ShoppingBag, label: 'TikTok Shop' },
   { path: '/advertisers', icon: Users, label: 'Nhà quảng cáo' },
+  { path: '/alerts', icon: Radar, label: 'Theo dõi đối thủ' },
+  { path: '/settings', icon: Settings, label: 'Cài đặt' },
+  { path: '/pricing', icon: CreditCard, label: 'Nâng cấp', freeOnly: true },
 ]
 
 export default function Sidebar() {
@@ -19,6 +24,12 @@ export default function Sidebar() {
   const location = useLocation()
   const navigate = useNavigate()
   const { user, isAuthenticated, logout } = useAuthStore()
+
+  const { data: profile } = useQuery({
+    queryKey: ['me'],
+    queryFn: getMe,
+    enabled: isAuthenticated,
+  })
 
   const handleLogout = () => {
     logout()
@@ -43,25 +54,60 @@ export default function Sidebar() {
 
       {/* Nav */}
       <nav className="flex-1 py-4 space-y-1 px-2">
-        {NAV_ITEMS.map((item) => {
-          const isActive = location.pathname === item.path
-          return (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                isActive
-                  ? 'bg-primary-600 text-white'
-                  : 'text-gray-400 hover:text-white hover:bg-white/5'
-              }`}
-              title={sidebarCollapsed ? item.label : undefined}
-            >
-              <item.icon size={20} className="flex-shrink-0" />
-              {!sidebarCollapsed && <span>{item.label}</span>}
-            </Link>
-          )
-        })}
+        {NAV_ITEMS
+          .filter((item) => {
+            if ('freeOnly' in item && item.freeOnly && user?.tier !== 'free') return false
+            return true
+          })
+          .map((item) => {
+            const isActive = location.pathname === item.path
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                  isActive
+                    ? 'bg-primary-600 text-white'
+                    : 'text-gray-400 hover:text-white hover:bg-white/5'
+                }`}
+                title={sidebarCollapsed ? item.label : undefined}
+              >
+                <item.icon size={20} className="flex-shrink-0" />
+                {!sidebarCollapsed && <span>{item.label}</span>}
+              </Link>
+            )
+          })}
       </nav>
+
+      {/* Usage indicator for free users */}
+      {!sidebarCollapsed && isAuthenticated && user?.tier === 'free' && profile && (
+        <div className="px-3 py-2 border-t border-white/10">
+          <div className="text-xs text-gray-400 mb-1">
+            Tìm kiếm: {profile.usage.searches.used}/{profile.usage.searches.limit}
+          </div>
+          <div className="w-full bg-white/10 rounded-full h-1.5">
+            <div
+              className="bg-primary-500 h-1.5 rounded-full transition-all"
+              style={{ width: `${Math.min(100, (profile.usage.searches.used / profile.usage.searches.limit) * 100)}%` }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* AI credits indicator for paid users */}
+      {!sidebarCollapsed && isAuthenticated && user?.tier !== 'free' && profile && profile.usage.ai_credits.limit > 0 && (
+        <div className="px-3 py-2 border-t border-white/10">
+          <div className="text-xs text-gray-400 mb-1">
+            AI Credits: {profile.usage.ai_credits.used}/{profile.usage.ai_credits.limit}
+          </div>
+          <div className="w-full bg-white/10 rounded-full h-1.5">
+            <div
+              className="bg-fuchsia-500 h-1.5 rounded-full transition-all"
+              style={{ width: `${Math.min(100, (profile.usage.ai_credits.used / profile.usage.ai_credits.limit) * 100)}%` }}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Bottom — User + Collapse */}
       <div className="border-t border-white/10 p-3 space-y-2">

@@ -80,6 +80,10 @@ class Ad(BaseModel):
     has_text_overlay: Mapped[bool | None] = mapped_column(Boolean)
     dominant_colors: Mapped[dict | None] = mapped_column(JSONB, default=None)
 
+    # AI Analysis (on-demand, cached)
+    ai_analysis: Mapped[dict | None] = mapped_column(JSONB, default=None)
+    ai_analyzed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
     # Status
     first_seen: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     last_seen: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

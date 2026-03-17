@@ -1,5 +1,6 @@
-import { Search, Bell } from 'lucide-react'
+import { Search } from 'lucide-react'
 import { useAuthStore } from '../../stores/authStore'
+import NotificationBell from './NotificationBell'
 
 export default function TopBar() {
   const { user, isAuthenticated } = useAuthStore()
@@ -15,10 +16,7 @@ export default function TopBar() {
 
       {/* Right side */}
       <div className="flex items-center gap-3">
-        <button className="relative p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100">
-          <Bell size={18} />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
-        </button>
+        {isAuthenticated && <NotificationBell />}
         {isAuthenticated && user && (
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-sm font-semibold">

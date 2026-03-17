@@ -1,6 +1,7 @@
 import time
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
+from pydantic import BaseModel as PydanticBaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -23,6 +24,11 @@ from app.schemas.auth import (
 )
 
 router = APIRouter()
+
+
+class UserSettingsUpdate(PydanticBaseModel):
+    email_alerts_enabled: bool | None = None
+    full_name: str | None = None
 
 # Rate limiting: max attempts per IP per window
 RATE_LIMIT_MAX = 10
@@ -145,6 +151,55 @@ async def refresh_token(
         refresh_token=new_refresh,
         token_type="bearer",
     )
+
+
+@router.get("/me")
+async def get_me(user: User = Depends(get_current_user)):
+    """Lấy thông tin user + usage hiện tại."""
+    from app.config import settings
+    from app.core.tier_limits import get_tier_limits
+
+    limits = get_tier_limits(user.tier)
+    return {
+        "id": str(user.id),
+        "email": user.email,
+        "full_name": user.full_name,
+        "tier": user.tier,
+        "subscription_status": user.subscription_status,
+        "usage": {
+            "searches": {
+                "used": user.daily_search_count,
+                "limit": limits.searches_per_day,
+            },
+            "ai_credits": {
+                "used": user.ai_credits_used,
+                "limit": limits.ai_credits_per_month,
+            },
+            "boards": {
+                "limit": limits.max_boards,
+            },
+            "saved_ads": {
+                "limit": limits.max_saved_ads,
+            },
+        },
+        "email_alerts_enabled": user.email_alerts_enabled,
+        "stripe_publishable_key": settings.stripe_publishable_key,
+    }
+
+
+@router.patch("/settings")
+async def update_settings(
+    data: UserSettingsUpdate,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Cập nhật user settings."""
+    if data.email_alerts_enabled is not None:
+        user.email_alerts_enabled = data.email_alerts_enabled
+    if data.full_name is not None:
+        user.full_name = data.full_name
+    await db.commit()
+    return {"ok": True}
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)

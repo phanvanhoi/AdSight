@@ -7,6 +7,9 @@ from app.api.dashboard import router as dashboard_router
 from app.api.export import router as export_router
 from app.api.tiktok_shop import router as tiktok_shop_router
 from app.api.advertisers import router as advertisers_router
+from app.api.billing import router as billing_router
+from app.api.alerts import router as alerts_router
+from app.api.notifications import router as notifications_router
 
 api_router = APIRouter()
 
@@ -17,3 +20,6 @@ api_router.include_router(dashboard_router, prefix="/dashboard", tags=["Dashboar
 api_router.include_router(export_router, prefix="/export", tags=["Export"])
 api_router.include_router(tiktok_shop_router, prefix="/tiktok-shop", tags=["TikTok Shop"])
 api_router.include_router(advertisers_router, prefix="/advertisers", tags=["Advertisers"])
+api_router.include_router(billing_router, prefix="/billing", tags=["Billing"])
+api_router.include_router(alerts_router, prefix="/alerts", tags=["Alerts"])
+api_router.include_router(notifications_router, prefix="/notifications", tags=["Notifications"])

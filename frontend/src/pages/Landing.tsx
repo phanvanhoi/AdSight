@@ -144,9 +144,9 @@ export default function Landing() {
               <li>AI Analysis: 50 credits</li>
               <li>5 competitor alerts</li>
             </ul>
-            <button className="block mt-6 w-full text-center py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700">
-              Coming soon
-            </button>
+            <Link to="/register" className="block mt-6 w-full text-center py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700">
+              Bắt đầu dùng thử
+            </Link>
           </div>
 
           {/* Agency */}
@@ -161,9 +161,9 @@ export default function Landing() {
               <li>Client reporting</li>
               <li>Priority support</li>
             </ul>
-            <button className="block mt-6 w-full text-center py-2 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50">
-              Coming soon
-            </button>
+            <Link to="/register" className="block mt-6 w-full text-center py-2 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50">
+              Bắt đầu dùng thử
+            </Link>
           </div>
         </div>
       </section>

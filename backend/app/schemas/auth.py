@@ -25,5 +25,10 @@ class UserResponse(BaseModel):
     email: str
     full_name: str
     tier: str
+    subscription_status: str | None = None
+    ai_credits_used: int = 0
+    ai_credits_limit: int = 0
+    daily_searches_used: int = 0
+    daily_searches_limit: int = 50
 
     model_config = {"from_attributes": True}

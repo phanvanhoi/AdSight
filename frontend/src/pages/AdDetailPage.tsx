@@ -2,9 +2,12 @@ import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft } from 'lucide-react'
 import { getAdDetail } from '../api/ads'
+import { useAuthStore } from '../stores/authStore'
+import AIAnalysisPanel from '../components/ads/AIAnalysisPanel'
 
 export default function AdDetailPage() {
   const { id } = useParams<{ id: string }>()
+  const { isAuthenticated } = useAuthStore()
 
   const { data: ad, isLoading } = useQuery({
     queryKey: ['ad', id],
@@ -168,6 +171,9 @@ export default function AdDetailPage() {
               {ad.target_countries?.length > 0 && <p>Quốc gia: {ad.target_countries.join(', ')}</p>}
             </div>
           </div>
+
+          {/* AI Analysis */}
+          {isAuthenticated && <AIAnalysisPanel adId={ad.id} />}
         </div>
       </div>
     </div>
