@@ -59,12 +59,18 @@ class MetaCollector(BaseCollector):
             search_terms: str - keyword to search
             ad_reached_countries: list[str] - e.g. ["VN"]
             ad_type: str - "ALL" | "POLITICAL_AND_ISSUE_ADS"
+            ad_active_status: str - "ACTIVE" | "INACTIVE" | "ALL" (default ALL)
+            ad_delivery_date_min: str - "YYYY-MM-DD" minimum impressions date
+            media_type: str - "ALL" | "IMAGE" | "VIDEO" | "MEME" | "NONE"
             limit: int - results per page (max 1000)
             max_pages: int - max pagination pages
         """
         search_terms = params.get("search_terms", "")
         countries = params.get("ad_reached_countries", ["VN"])
         ad_type = params.get("ad_type", "ALL")
+        ad_active_status = params.get("ad_active_status")
+        ad_delivery_date_min = params.get("ad_delivery_date_min")
+        media_type = params.get("media_type")
         limit = params.get("limit", 100)
         max_pages = params.get("max_pages", 5)
 
@@ -79,6 +85,12 @@ class MetaCollector(BaseCollector):
                 "fields": ",".join(AD_FIELDS),
                 "limit": min(limit, 1000),
             }
+            if ad_active_status:
+                request_params["ad_active_status"] = ad_active_status
+            if ad_delivery_date_min:
+                request_params["ad_delivery_date_min"] = ad_delivery_date_min
+            if media_type:
+                request_params["media_type"] = media_type
 
             url = META_AD_LIBRARY_URL
             page = 0
@@ -231,7 +243,16 @@ VN_SEARCH_TERMS = [
 ]
 
 
-async def collect_and_store(search_terms: str | None = None) -> dict:
+async def collect_and_store(
+    search_terms: str | None = None,
+    *,
+    ad_active_status: str | None = None,
+    ad_delivery_date_min: str | None = None,
+    media_type: str | None = None,
+    countries: list[str] | None = None,
+    limit: int = 100,
+    max_pages: int = 3,
+) -> dict:
     """
     Fetch ads from Meta Ad Library, normalize, upsert to DB, index to ES.
     Returns stats: {"fetched": N, "new": M, "updated": K}
@@ -251,9 +272,12 @@ async def collect_and_store(search_terms: str | None = None) -> dict:
             try:
                 ads = await collector.collect_with_retry({
                     "search_terms": term,
-                    "ad_reached_countries": ["VN"],
-                    "limit": 100,
-                    "max_pages": 3,
+                    "ad_reached_countries": countries or ["VN"],
+                    "ad_active_status": ad_active_status,
+                    "ad_delivery_date_min": ad_delivery_date_min,
+                    "media_type": media_type,
+                    "limit": limit,
+                    "max_pages": max_pages,
                 })
                 total_fetched += len(ads)
 
@@ -281,5 +305,9 @@ async def collect_and_store(search_terms: str | None = None) -> dict:
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    result = asyncio.run(collect_and_store())
+    result = asyncio.run(collect_and_store(
+        ad_active_status="ACTIVE",
+        ad_delivery_date_min="2026-03-01",
+        media_type="VIDEO",
+    ))
     print(f"Meta collection done: {result}")

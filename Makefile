@@ -56,6 +56,10 @@ seed-docker:
 collect-meta:
 	docker compose exec api python -m app.collectors.meta_collector
 
+# Reset all ad data and re-collect with filters (Active + Video + March 2026+)
+reset-collect:
+	docker compose exec api python -m scripts.reset_and_collect
+
 collect-tiktok:
 	docker compose exec api python -m app.collectors.tiktok_collector
 
