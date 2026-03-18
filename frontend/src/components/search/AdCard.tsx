@@ -40,13 +40,10 @@ export default function AdCard({ ad }: Props) {
       {/* Thumbnail */}
       <div className="relative aspect-video bg-gray-100 overflow-hidden">
         {ad.thumbnail_url?.includes('/ads/archive/render_ad') ? (
-          <iframe
-            src={ad.thumbnail_url}
-            title={ad.headline || 'Ad preview'}
-            className="w-full h-full border-0 pointer-events-none"
-            loading="lazy"
-            sandbox="allow-scripts allow-same-origin"
-          />
+          <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100 text-blue-600">
+            <ExternalLink size={28} className="mb-2 opacity-60" />
+            <span className="text-xs font-medium">Xem trên Facebook</span>
+          </div>
         ) : ad.thumbnail_url ? (
           <>
             <img

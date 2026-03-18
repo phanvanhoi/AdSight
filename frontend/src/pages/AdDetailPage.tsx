@@ -52,12 +52,18 @@ export default function AdDetailPage() {
           <div className="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-card">
             <div className="aspect-video bg-gray-100">
               {ad.thumbnail_url?.includes('/ads/archive/render_ad') ? (
-                <iframe
-                  src={ad.thumbnail_url}
-                  title={ad.headline || 'Ad preview'}
-                  className="w-full h-full border-0"
-                  sandbox="allow-scripts allow-same-origin"
-                />
+                <a
+                  href={ad.thumbnail_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100 text-blue-600 hover:from-blue-100 hover:to-blue-200 transition-colors"
+                >
+                  <svg className="w-10 h-10 mb-3 opacity-60" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c5.05-.5 9-4.76 9-9.95z" />
+                  </svg>
+                  <span className="text-sm font-semibold">Xem quảng cáo trên Facebook</span>
+                  <span className="text-xs text-blue-400 mt-1">Nhấn để mở trong tab mới</span>
+                </a>
               ) : ad.thumbnail_url ? (
                 <img src={ad.thumbnail_url} alt={ad.headline || 'Ad'} className="w-full h-full object-contain" />
               ) : (
