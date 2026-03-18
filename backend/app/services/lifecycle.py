@@ -86,21 +86,35 @@ async def update_hot_ads(db: AsyncSession, hot_threshold: float = 50.0) -> dict:
 
     def _percentile_score(values: list[float], max_points: float) -> list[float]:
         """Convert raw values to percentile-based scores (0 to max_points).
-        Uses log scale for better distribution of skewed data."""
+        Uses log scale for better distribution of skewed data.
+        Returns None if signal is useless (>90% same value)."""
         if not values:
-            return []
+            return None
+        # Check if signal is useful: count distinct values
+        unique_count = len(set(values))
+        if unique_count <= 1:
+            return None  # all same → useless signal
+        # If >90% of values are identical, signal is too flat
+        from collections import Counter
+        most_common_count = Counter(values).most_common(1)[0][1]
+        if most_common_count / len(values) > 0.9:
+            return None
+
         log_vals = [math.log1p(v) for v in values]
         min_v = min(log_vals)
         max_v = max(log_vals)
         spread = max_v - min_v
         if spread == 0:
-            return [max_points * 0.5] * len(values)  # all same → middle score
+            return None
         return [((v - min_v) / spread) * max_points for v in log_vals]
 
-    # Score each signal using percentile ranking
-    engagement_scores = _percentile_score([d["engagement"] for d in raw_data], 30.0)
-    longevity_scores = _percentile_score([d["days_running"] for d in raw_data], 25.0)
-    collection_scores = _percentile_score([d["collection_count"] for d in raw_data], 15.0)
+    # Define signals with base weights
+    signals = {
+        "engagement": ([d["engagement"] for d in raw_data], 30.0),
+        "longevity": ([d["days_running"] for d in raw_data], 25.0),
+        "collection": ([d["collection_count"] for d in raw_data], 35.0),
+        "saturation": ([d["ad_variants"] for d in raw_data], 10.0),
+    }
 
     # Impressions + spend combined
     imp_spend_vals = []
@@ -108,17 +122,42 @@ async def update_hot_ads(db: AsyncSession, hot_threshold: float = 50.0) -> dict:
         if d["impressions"] > 0:
             imp_spend_vals.append(d["impressions"])
         elif d["spend"] > 0:
-            imp_spend_vals.append(d["spend"] * 10)  # normalize spend to impression scale
+            imp_spend_vals.append(d["spend"] * 10)
         else:
             imp_spend_vals.append(0)
-    imp_spend_scores = _percentile_score(imp_spend_vals, 20.0)
+    signals["imp_spend"] = (imp_spend_vals, 20.0)
 
-    saturation_scores = _percentile_score([d["ad_variants"] for d in raw_data], 10.0)
+    # Score each signal, skip useless ones and redistribute weight
+    scored: dict[str, list[float]] = {}
+    total_weight = 0.0
+    active_weights: dict[str, float] = {}
+    for name, (vals, weight) in signals.items():
+        result_scores = _percentile_score(vals, weight)
+        if result_scores is not None:
+            scored[name] = result_scores
+            active_weights[name] = weight
+            total_weight += weight
+
+    # Redistribute: scale active signals to fill 0-100 range
+    scale = 100.0 / total_weight if total_weight > 0 else 1.0
+
+    # If no signal has differentiation (e.g. single ad), use raw absolute scoring
+    use_absolute = len(scored) == 0
 
     updated = 0
     for i, ad in enumerate(ads):
-        score = (engagement_scores[i] + longevity_scores[i] + collection_scores[i]
-                 + imp_spend_scores[i] + saturation_scores[i])
+        if use_absolute:
+            # Fallback: simple absolute score for small datasets
+            engagement = raw_data[i]["engagement"]
+            days = raw_data[i]["days_running"]
+            cc = raw_data[i]["collection_count"]
+            score = min(100.0,
+                        min(30.0, math.log1p(engagement) * 3.0)
+                        + min(25.0, days * 1.5)
+                        + min(35.0, math.log1p(cc) * 5.0)
+                        + min(10.0, raw_data[i]["ad_variants"] * 2.0))
+        else:
+            score = sum(scored[name][i] * scale for name in scored)
 
         # Recency penalty: decay for ads not seen recently
         if ad.last_seen:
