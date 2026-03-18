@@ -198,8 +198,8 @@ class TestDedupeAds:
 
         dupe = (await db.execute(
             select(Ad).where(Ad.platform_ad_id == "dupe_old")
-        )).scalar_one()
-        assert dupe.is_active is False
+        )).scalar_one_or_none()
+        assert dupe is None  # duplicate deleted
 
     async def test_different_phash_not_deduped(self, db: AsyncSession):
         from app.services.lifecycle import dedupe_ads

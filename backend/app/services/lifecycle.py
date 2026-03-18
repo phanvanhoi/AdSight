@@ -180,10 +180,7 @@ async def dedupe_ads(db: AsyncSession) -> dict:
     # Dedupe by content_hash (catches Meta/Google text duplicates)
     content_dupes = (await db.execute(
         select(Ad.platform, Ad.content_hash, func.count(Ad.id))
-        .where(
-            Ad.content_hash.isnot(None), Ad.content_hash != "",
-            Ad.is_active.is_(True),
-        )
+        .where(Ad.content_hash.isnot(None), Ad.content_hash != "")
         .group_by(Ad.platform, Ad.content_hash)
         .having(func.count(Ad.id) > 1)
     )).all()
@@ -197,10 +194,10 @@ async def dedupe_ads(db: AsyncSession) -> dict:
 
 
 async def _merge_group(db: AsyncSession, *filters) -> int:
-    """Merge a group of duplicate ads. Returns number of ads deactivated."""
+    """Merge a group of duplicate ads. Keeps newest, deletes the rest."""
     result = await db.execute(
         select(Ad)
-        .where(*filters, Ad.is_active.is_(True))
+        .where(*filters)
         .order_by(Ad.last_seen.desc().nullslast())
     )
     ads = result.scalars().all()
@@ -222,7 +219,7 @@ async def _merge_group(db: AsyncSession, *filters) -> int:
         if dupe.spend_upper and (not keeper.spend_upper or dupe.spend_upper > keeper.spend_upper):
             keeper.spend_upper = dupe.spend_upper
             keeper.spend_lower = dupe.spend_lower
-        dupe.is_active = False
+        await db.delete(dupe)
         merged += 1
 
     return merged
