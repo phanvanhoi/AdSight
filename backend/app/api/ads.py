@@ -15,6 +15,7 @@ from app.schemas.search import SearchRequest, SearchResponse
 from app.search.es_client import get_es
 from app.services.ai_analysis import analyze_ad_creative
 from app.services.search_service import search_ads
+from app.services.search_service_pg import search_ads_pg
 
 router = APIRouter()
 
@@ -63,6 +64,8 @@ async def search(
         page=page,
         limit=limit,
     )
+    if es is None:
+        return await search_ads_pg(db, request)
     return await search_ads(es, request)
 
 

@@ -44,7 +44,11 @@ def archive_stale_ads():
 
     async def _run():
         async with async_session() as db:
-            return await _archive(db, es_client.client, settings.es_ads_index)
+            try:
+                es = es_client.client
+            except RuntimeError:
+                es = None
+            return await _archive(db, es, settings.es_ads_index)
 
     return async_to_sync(_run)()
 

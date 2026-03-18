@@ -38,5 +38,9 @@ class ESClient:
 es_client = ESClient()
 
 
-async def get_es() -> AsyncElasticsearch:
-    return es_client.client
+async def get_es() -> AsyncElasticsearch | None:
+    """Return ES client or None if ES is not available."""
+    try:
+        return es_client.client
+    except RuntimeError:
+        return None

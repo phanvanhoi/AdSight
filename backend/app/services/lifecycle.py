@@ -137,6 +137,10 @@ async def archive_stale_ads(db: AsyncSession, es, index_name: str,
         logger.info("[lifecycle] No stale ads to archive from ES")
         return {"archived": 0}
 
+    if es is None:
+        logger.info(f"[lifecycle] ES unavailable, skipping archive of {len(ad_ids)} ads")
+        return {"archived": 0, "skipped": len(ad_ids)}
+
     try:
         body = [
             {"delete": {"_index": index_name, "_id": ad_id}}
