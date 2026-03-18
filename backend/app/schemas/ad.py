@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 
 class AdDetailResponse(BaseModel):
@@ -39,6 +39,13 @@ class AdDetailResponse(BaseModel):
     category_l2: str | None = None
     detected_offers: list | None = None
     emotional_triggers: list | None = None
+
+    @field_validator("detected_offers", "emotional_triggers", mode="before")
+    @classmethod
+    def _coerce_to_list(cls, v):
+        if isinstance(v, dict):
+            return list(v.values()) if v else None
+        return v
     target_audience_guess: str | None = None
     # Enrichment — Estimator
     estimated_daily_spend: float | None = None
