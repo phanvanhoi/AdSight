@@ -12,22 +12,22 @@ class ESClient:
         self._client = None
 
     async def initialize(self):
-        self._client = AsyncElasticsearch(
+        client = AsyncElasticsearch(
             hosts=[settings.elasticsearch_url],
-            request_timeout=30,
+            request_timeout=10,
         )
-        # Health check on initialization
+        # Health check — only set _client if ES is reachable
         try:
-            info = await self._client.info()
+            info = await client.info()
+            self._client = client
             logger.info(f"Connected to Elasticsearch {info['version']['number']}")
         except Exception as e:
-            logger.error(f"Elasticsearch connection failed: {e}")
-            raise
+            await client.close()
+            logger.warning(f"Elasticsearch unavailable: {e}")
+            self._client = None
 
     @property
-    def client(self) -> AsyncElasticsearch:
-        if self._client is None:
-            raise RuntimeError("Elasticsearch not initialized. Call initialize() first.")
+    def client(self) -> AsyncElasticsearch | None:
         return self._client
 
     async def close(self):
@@ -40,7 +40,4 @@ es_client = ESClient()
 
 async def get_es() -> AsyncElasticsearch | None:
     """Return ES client or None if ES is not available."""
-    try:
-        return es_client.client
-    except RuntimeError:
-        return None
+    return es_client.client

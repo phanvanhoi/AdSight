@@ -36,11 +36,9 @@ async def lifespan(app: FastAPI):
         await redis_client.initialize()
     except Exception:
         pass  # Rate limiting degrades gracefully
-    try:
-        await es_client.initialize()
+    await es_client.initialize()
+    if es_client.client:
         await _ensure_es_index()
-    except Exception:
-        pass  # Search unavailable but auth/CRUD still work
     yield
     # Shutdown
     await engine.dispose()
