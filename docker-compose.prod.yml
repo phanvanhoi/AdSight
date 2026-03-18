@@ -17,11 +17,11 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 1
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 1 --limit-max-requests 1000
     deploy:
       resources:
         limits:
-          memory: 256M
+          memory: 200M
     restart: unless-stopped
 
   celery-worker:
@@ -32,11 +32,11 @@ services:
     env_file: .env.production
     depends_on:
       - api
-    command: celery -A app.celery_app worker -l info -c 1
+    command: celery -A app.celery_app worker -l info -c 1 --max-tasks-per-child=50
     deploy:
       resources:
         limits:
-          memory: 200M
+          memory: 180M
     restart: unless-stopped
 
   celery-beat:
@@ -51,7 +51,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 100M
+          memory: 50M
     restart: unless-stopped
 
   frontend:
@@ -63,6 +63,10 @@ services:
     container_name: adsight-frontend
     expose:
       - "80"
+    deploy:
+      resources:
+        limits:
+          memory: 32M
     restart: unless-stopped
 
   # ========================
@@ -79,6 +83,10 @@ services:
     depends_on:
       - api
       - frontend
+    deploy:
+      resources:
+        limits:
+          memory: 32M
     restart: unless-stopped
 
   # ========================
@@ -92,14 +100,14 @@ services:
       - "5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    command: postgres -c shared_buffers=128MB -c work_mem=4MB -c effective_cache_size=256MB
+    command: postgres -c shared_buffers=48MB -c work_mem=2MB -c effective_cache_size=128MB -c maintenance_work_mem=16MB
     deploy:
       resources:
         limits:
-          memory: 300M
+          memory: 180M
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U adsight"]
-      interval: 5s
+      interval: 10s
       timeout: 5s
       retries: 5
     restart: unless-stopped
@@ -114,19 +122,19 @@ services:
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
-      - "ES_JAVA_OPTS=-Xms200m -Xmx200m"
+      - "ES_JAVA_OPTS=-Xms128m -Xmx128m"
     volumes:
       - es_data:/usr/share/elasticsearch/data
       - ./elasticsearch/config:/usr/share/elasticsearch/config/custom
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
-      interval: 10s
+      interval: 15s
       timeout: 5s
       retries: 10
     deploy:
       resources:
         limits:
-          memory: 350M
+          memory: 256M
     restart: unless-stopped
 
   redis:
@@ -136,14 +144,14 @@ services:
       - "6379"
     volumes:
       - redis_data:/data
-    command: redis-server --maxmemory 50mb --maxmemory-policy allkeys-lru
+    command: redis-server --maxmemory 30mb --maxmemory-policy allkeys-lru
     deploy:
       resources:
         limits:
-          memory: 64M
+          memory: 48M
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
+      interval: 10s
       timeout: 3s
       retries: 5
     restart: unless-stopped
@@ -162,7 +170,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 128M
+          memory: 96M
     restart: unless-stopped
 
 volumes:
