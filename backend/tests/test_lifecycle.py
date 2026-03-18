@@ -103,17 +103,28 @@ class TestUpdateHotAds:
     async def test_low_engagement_not_hot(self, db: AsyncSession):
         from app.services.lifecycle import update_hot_ads
 
+        # Low engagement ad — should rank below the high engagement ad
         _make_ad(db, platform_ad_id="boring_1",
                  likes=5, comments=0, shares=0,
+                 first_seen=datetime.now(timezone.utc) - timedelta(days=1),
+                 last_seen=datetime.now(timezone.utc))
+        # High engagement ad — creates contrast for percentile scoring
+        _make_ad(db, platform_ad_id="popular_1",
+                 likes=5000, comments=500, shares=200,
+                 first_seen=datetime.now(timezone.utc) - timedelta(days=30),
                  last_seen=datetime.now(timezone.utc))
         await db.commit()
 
         await update_hot_ads(db, hot_threshold=50.0)
 
-        ad = (await db.execute(
+        boring = (await db.execute(
             select(Ad).where(Ad.platform_ad_id == "boring_1")
         )).scalar_one()
-        assert ad.is_hot is False
+        popular = (await db.execute(
+            select(Ad).where(Ad.platform_ad_id == "popular_1")
+        )).scalar_one()
+        assert boring.viral_score < popular.viral_score
+        assert boring.is_hot is False
 
     async def test_recency_decay(self, db: AsyncSession):
         from app.services.lifecycle import update_hot_ads

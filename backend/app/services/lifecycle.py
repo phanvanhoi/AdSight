@@ -3,6 +3,7 @@
 Pure async functions, no Celery dependency. Called by tasks/lifecycle_tasks.py.
 """
 import logging
+import math
 from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import delete, func, or_, select, update
@@ -50,60 +51,87 @@ async def update_hot_ads(db: AsyncSession, hot_threshold: float = 50.0) -> dict:
     result = await db.execute(select(Ad).where(Ad.is_active.is_(True)))
     ads = result.scalars().all()
 
-    updated = 0
+    if not ads:
+        return {"updated": 0}
+
+    # ── Collect raw values for percentile-based scoring ──
+    now = datetime.now(timezone.utc)
+    raw_data = []
     for ad in ads:
-        # ── Signal 1: Engagement (primarily TikTok) ──
         likes = ad.likes or 0
         comments = ad.comments or 0
         shares = ad.shares or 0
-        total_engagement = likes + comments * 2 + shares * 3
-        engagement_score = min(40.0, total_engagement / 100.0)  # max 40 points
+        engagement = likes + comments * 2 + shares * 3
 
-        # ── Signal 2: Ad longevity (days running) ──
-        longevity_score = 0.0
+        days_running = 0
         if ad.first_seen:
             first = ad.first_seen
             if first.tzinfo is None:
                 first = first.replace(tzinfo=timezone.utc)
-            days_running = max(1, (datetime.now(timezone.utc) - first).days)
-            # 1 day=2pts, 7 days=14pts, 14 days=20pts (cap)
-            longevity_score = min(20.0, days_running * 2.0)
+            days_running = max(1, (now - first).days)
 
-        # ── Signal 3: Collection frequency ──
         collection_count = ad.collection_count or 1
-        # Each re-collection = still being served = 3pts, max 15pts
-        collection_score = min(15.0, (collection_count - 1) * 3.0)
-
-        # ── Signal 4: Impressions & Spend (Meta, when available) ──
-        spend_score = 0.0
-        impressions = ad.impressions_upper or ad.impressions_lower
-        spend = ad.spend_upper or ad.spend_lower
-        if impressions and impressions > 0:
-            # 1K imp = 2pts, 10K = 10pts, max 15pts
-            spend_score = min(15.0, (impressions / 1000.0) * 2.0)
-        elif spend and spend > 0:
-            # Use spend as fallback: 10K VND = 1pt, max 15pts
-            spend_score = min(15.0, spend / 10000.0)
-
-        # ── Signal 5: Advertiser saturation ──
+        impressions = ad.impressions_upper or ad.impressions_lower or 0
+        spend = ad.spend_upper or ad.spend_lower or 0
         ad_variants = advertiser_ad_counts.get(ad.advertiser_id, 1)
-        # Multiple variants = bigger budget: 2 ads=3pts, 5+=10pts max
-        saturation_score = min(10.0, (ad_variants - 1) * 3.0)
 
-        # ── Final score ──
-        score = min(100.0, engagement_score + longevity_score + collection_score
-                    + spend_score + saturation_score)
+        raw_data.append({
+            "engagement": engagement,
+            "days_running": days_running,
+            "collection_count": collection_count,
+            "impressions": impressions,
+            "spend": spend,
+            "ad_variants": ad_variants,
+        })
+
+    def _percentile_score(values: list[float], max_points: float) -> list[float]:
+        """Convert raw values to percentile-based scores (0 to max_points).
+        Uses log scale for better distribution of skewed data."""
+        if not values:
+            return []
+        log_vals = [math.log1p(v) for v in values]
+        min_v = min(log_vals)
+        max_v = max(log_vals)
+        spread = max_v - min_v
+        if spread == 0:
+            return [max_points * 0.5] * len(values)  # all same → middle score
+        return [((v - min_v) / spread) * max_points for v in log_vals]
+
+    # Score each signal using percentile ranking
+    engagement_scores = _percentile_score([d["engagement"] for d in raw_data], 30.0)
+    longevity_scores = _percentile_score([d["days_running"] for d in raw_data], 25.0)
+    collection_scores = _percentile_score([d["collection_count"] for d in raw_data], 15.0)
+
+    # Impressions + spend combined
+    imp_spend_vals = []
+    for d in raw_data:
+        if d["impressions"] > 0:
+            imp_spend_vals.append(d["impressions"])
+        elif d["spend"] > 0:
+            imp_spend_vals.append(d["spend"] * 10)  # normalize spend to impression scale
+        else:
+            imp_spend_vals.append(0)
+    imp_spend_scores = _percentile_score(imp_spend_vals, 20.0)
+
+    saturation_scores = _percentile_score([d["ad_variants"] for d in raw_data], 10.0)
+
+    updated = 0
+    for i, ad in enumerate(ads):
+        score = (engagement_scores[i] + longevity_scores[i] + collection_scores[i]
+                 + imp_spend_scores[i] + saturation_scores[i])
 
         # Recency penalty: decay for ads not seen recently
         if ad.last_seen:
             last_seen = ad.last_seen
             if last_seen.tzinfo is None:
                 last_seen = last_seen.replace(tzinfo=timezone.utc)
-            days_since_seen = (datetime.now(timezone.utc) - last_seen).days
+            days_since_seen = (now - last_seen).days
             if days_since_seen > 1:
                 score *= max(0.3, 1.0 - (days_since_seen * 0.1))
 
         engagement_rate = None
+        impressions = ad.impressions_upper or ad.impressions_lower
+        total_engagement = (ad.likes or 0) + (ad.comments or 0) * 2 + (ad.shares or 0) * 3
         if impressions and impressions > 0 and total_engagement > 0:
             engagement_rate = (total_engagement / impressions) * 100
 
