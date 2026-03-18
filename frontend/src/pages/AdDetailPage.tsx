@@ -51,10 +51,17 @@ export default function AdDetailPage() {
           {/* Media card */}
           <div className="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-card">
             <div className="aspect-video bg-gray-100">
-              {ad.thumbnail_url ? (
+              {ad.thumbnail_url?.includes('/ads/archive/render_ad') ? (
+                <iframe
+                  src={ad.thumbnail_url}
+                  title={ad.headline || 'Ad preview'}
+                  className="w-full h-full border-0"
+                  sandbox="allow-scripts allow-same-origin"
+                />
+              ) : ad.thumbnail_url ? (
                 <img src={ad.thumbnail_url} alt={ad.headline || 'Ad'} className="w-full h-full object-contain" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-400">Chua co preview</div>
+                <div className="w-full h-full flex items-center justify-center text-gray-400">Chưa có preview</div>
               )}
             </div>
             <div className="p-6 space-y-4">

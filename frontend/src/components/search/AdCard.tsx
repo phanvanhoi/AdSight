@@ -39,7 +39,15 @@ export default function AdCard({ ad }: Props) {
     >
       {/* Thumbnail */}
       <div className="relative aspect-video bg-gray-100 overflow-hidden">
-        {ad.thumbnail_url ? (
+        {ad.thumbnail_url?.includes('/ads/archive/render_ad') ? (
+          <iframe
+            src={ad.thumbnail_url}
+            title={ad.headline || 'Ad preview'}
+            className="w-full h-full border-0 pointer-events-none"
+            loading="lazy"
+            sandbox="allow-scripts allow-same-origin"
+          />
+        ) : ad.thumbnail_url ? (
           <>
             <img
               src={ad.thumbnail_url}
