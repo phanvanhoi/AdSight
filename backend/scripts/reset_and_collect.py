@@ -48,9 +48,14 @@ async def clear_ads_data(keep_users: bool = True):
 
 
 async def clear_elasticsearch():
-    """Delete and recreate the ads ES index."""
-    await es_client.initialize()
-    es = es_client.client
+    """Delete and recreate the ads ES index (skip if ES unavailable)."""
+    try:
+        await es_client.initialize()
+        es = es_client.client
+    except Exception:
+        logger.info("Elasticsearch unavailable, skipping clear.")
+        return
+
     try:
         index = "ads"
         if await es.indices.exists(index=index):

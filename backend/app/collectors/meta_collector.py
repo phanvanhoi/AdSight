@@ -260,8 +260,13 @@ async def collect_and_store(
     collector = MetaCollector()
     terms = [search_terms] if search_terms else VN_SEARCH_TERMS
 
-    await es_client.initialize()
-    es = es_client.client
+    # ES is optional — skip indexing if unavailable
+    es = None
+    try:
+        await es_client.initialize()
+        es = es_client.client
+    except Exception:
+        logger.warning("[meta] ES unavailable, skipping indexing")
 
     total_fetched = 0
     total_new = 0
@@ -286,7 +291,8 @@ async def collect_and_store(
                         result = await upsert_ads(db, ads)
                         total_new += result["new"]
                         total_updated += result["updated"]
-                        await index_ads_to_es(es, result["ads"])
+                        if es:
+                            await index_ads_to_es(es, result["ads"])
                         # Enrich newly upserted ads
                         ad_ids = [a["id"] for a in result["ads"] if a.get("id")]
                         if ad_ids:
@@ -296,7 +302,8 @@ async def collect_and_store(
             except Exception as e:
                 logger.error(f"[meta] Error collecting '{term}': {e}", exc_info=True)
     finally:
-        await es_client.close()
+        if es:
+            await es_client.close()
 
     stats = {"fetched": total_fetched, "new": total_new, "updated": total_updated}
     logger.info(f"[meta] Collection complete: {stats}")

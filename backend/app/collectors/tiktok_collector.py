@@ -120,8 +120,12 @@ async def collect_and_store(country_code: str = "VN", period: int = 30) -> dict:
     """
     collector = TikTokCollector()
 
-    await es_client.initialize()
-    es = es_client.client
+    es = None
+    try:
+        await es_client.initialize()
+        es = es_client.client
+    except Exception:
+        logger.warning("[tiktok] ES unavailable, skipping indexing")
 
     total_fetched = 0
     total_new = 0
@@ -141,7 +145,8 @@ async def collect_and_store(country_code: str = "VN", period: int = 30) -> dict:
                 result = await upsert_ads(db, ads)
                 total_new = result["new"]
                 total_updated = result["updated"]
-                await index_ads_to_es(es, result["ads"])
+                if es:
+                    await index_ads_to_es(es, result["ads"])
                 # Enrich newly upserted ads
                 ad_ids = [a["id"] for a in result["ads"] if a.get("id")]
                 if ad_ids:
@@ -149,7 +154,8 @@ async def collect_and_store(country_code: str = "VN", period: int = 30) -> dict:
     except Exception as e:
         logger.error(f"[tiktok] Error: {e}", exc_info=True)
     finally:
-        await es_client.close()
+        if es:
+            await es_client.close()
 
     stats = {"fetched": total_fetched, "new": total_new, "updated": total_updated}
     logger.info(f"[tiktok] Collection complete: {stats}")
